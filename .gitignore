@@ -4,4 +4,5 @@
 db.sqlite3
 .DS_Store
 .env
+migrations/
 # Add anything else that you guys feel is ignorable
