@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockFlow — Trade. Flow. Grow.</title>
+  <meta name="description" content="StockFlow connects buyers and sellers through streamlined inventory management, seamless orders, and real-time stock visibility." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:      #1a2e1f;
+      --forest-mid:  #243328;
+      --forest-lt:   #2e4035;
+      --forest-dk:   #0e1a10;
+      --copper:      #c87941;
+      --copper-lt:   #e09060;
+      --copper-glow: rgba(200,121,65,0.25);
+      --cream:       #f5f0e8;
+      --cream-dim:   #d9d0bc;
+      --ink:         #0e1a10;
+      --glass:       rgba(255,255,255,0.04);
+      --glass-md:    rgba(255,255,255,0.06);
+      --border:      rgba(200,121,65,0.22);
+      --border-lt:   rgba(200,121,65,0.10);
+      --shadow:      0 24px 64px rgba(0,0,0,0.45);
+      --radius:      2px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--forest);
+      color: var(--cream);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── NOISE TEXTURE ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAVIGATION ───────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(14,26,16,0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-lt);
+      transition: background 0.3s ease;
+    }
+
+    .navbar.scrolled {
+      background: rgba(14,26,16,0.92);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .nav-mark {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--copper);
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.3s;
+    }
+    .nav-mark span {
+      display: block;
+      width: 10px;
+      height: 10px;
+      background: var(--copper);
+      transition: background 0.3s;
+    }
+
+    .nav-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.25s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: var(--copper);
+      transition: width 0.3s ease;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      padding: 10px 24px;
+      background: var(--copper);
+      color: var(--ink) !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.14em !important;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.15s;
+      text-decoration: none;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { background: var(--copper-lt); transform: translateY(-1px); }
+
+    /* ── HERO SECTION ─────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 120px 48px 80px;
+    }
+
+    /* Decorative grid */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,121,65,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,121,65,0.05) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+    }
+
+    /* Copper gradient glow */
+    .hero-glow {
+      position: absolute;
+      width: 700px;
+      height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,121,65,0.08) 0%, transparent 70%);
+      top: -100px;
+      right: -100px;
+      pointer-events: none;
+      animation: pulseGlow 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0%   { opacity: 0.6; transform: scale(1); }
+      100% { opacity: 1;   transform: scale(1.1); }
+    }
+
+    /* Decorative arcs */
+    .hero-arc {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(200,121,65,0.12);
+      pointer-events: none;
+    }
+    .hero-arc-1 {
+      width: 600px; height: 600px;
+      top: 10%; right: -200px;
+      animation: floatArc 20s ease-in-out infinite;
+    }
+    .hero-arc-2 {
+      width: 400px; height: 400px;
+      top: 30%; right: -80px;
+      border-color: rgba(200,121,65,0.08);
+      animation: floatArc 15s ease-in-out infinite reverse;
+    }
+    .hero-arc-3 {
+      width: 250px; height: 250px;
+      bottom: 15%; left: -80px;
+      border-color: rgba(200,121,65,0.06);
+      animation: floatArc 18s ease-in-out infinite;
+    }
+
+    @keyframes floatArc {
+      0%, 100% { transform: translate(0, 0); }
+      50%      { transform: translate(15px, -20px); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 28px;
+      animation: fadeUp 0.6s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .hero-label::before {
+      content: '';
+      width: 32px;
+      height: 1px;
+      background: var(--copper);
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 6vw, 82px);
+      font-weight: 300;
+      line-height: 1.06;
+      color: var(--cream);
+      margin-bottom: 28px;
+      animation: fadeUp 0.7s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--copper-lt);
+    }
+    .hero-title .thin {
+      font-weight: 300;
+      color: var(--cream-dim);
+    }
+
+    .hero-desc {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.8;
+      max-width: 480px;
+      letter-spacing: 0.02em;
+      margin-bottom: 44px;
+      animation: fadeUp 0.7s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.7s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      background: var(--copper);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+    }
+    .btn-primary:hover {
+      background: var(--copper-lt);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(200,121,65,0.25);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      background: transparent;
+      color: var(--cream);
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.25s, color 0.25s, background 0.25s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--copper);
+      background: rgba(200,121,65,0.06);
+    }
+
+    .btn-arrow {
+      font-size: 16px;
+      transition: transform 0.25s;
+    }
+    .btn-primary:hover .btn-arrow,
+    .btn-secondary:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+
+    /* Hero Stats Bar */
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      margin-top: 64px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border-lt);
+      animation: fadeUp 0.7s 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .hero-stat {
+      text-align: left;
+    }
+    .hero-stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 400;
+      color: var(--copper-lt);
+      line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-top: 6px;
+    }
+
+    /* ── FEATURES SECTION ─────────────────────────────── */
+    .section {
+      padding: 120px 48px;
+      position: relative;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 20px;
+    }
+    .section-label::before,
+    .section-label::after {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 300;
+      line-height: 1.12;
+      color: var(--cream);
+    }
+    .section-title em {
+      font-style: italic;
+      color: var(--copper-lt);
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 16px auto 0;
+      letter-spacing: 0.02em;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: var(--glass);
+      border: 1px solid var(--border-lt);
+      padding: 44px 32px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+    .feature-card:hover {
+      border-color: var(--border);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+
+    /* Top copper accent line */
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--copper), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 24px;
+      display: block;
+      line-height: 1;
+    }
+
+    .feature-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+    }
+
+    .feature-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 24px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--copper);
+      text-decoration: none;
+      transition: color 0.25s, gap 0.25s;
+    }
+    .feature-link:hover {
+      color: var(--copper-lt);
+      gap: 10px;
+    }
+
+    /* ── HOW IT WORKS SECTION ─────────────────────────── */
+    .steps-section {
+      background: var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .steps-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,121,65,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,121,65,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-card {
+      padding: 48px 32px;
+      position: relative;
+      border-right: 1px solid var(--border-lt);
+      transition: background 0.3s;
+    }
+    .step-card:last-child { border-right: none; }
+    .step-card:hover { background: rgba(200,121,65,0.03); }
+
+    .step-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 56px;
+      font-weight: 300;
+      color: rgba(200,121,65,0.15);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .step-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--cream);
+      margin-bottom: 10px;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── PRODUCT CATEGORIES SECTION ───────────────────── */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .category-card {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      background: var(--glass);
+      border: 1px solid var(--border-lt);
+      padding: 36px 32px;
+      transition: border-color 0.3s, transform 0.3s;
+      cursor: pointer;
+    }
+    .category-card:hover {
+      border-color: var(--border);
+      transform: translateX(6px);
+    }
+
+    .category-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(200,121,65,0.06);
+      border: 1px solid var(--border-lt);
+    }
+
+    .category-info { flex: 1; }
+
+    .category-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--cream);
+      margin-bottom: 6px;
+    }
+
+    .category-desc {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.6;
+    }
+
+    .category-count {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--copper);
+      flex-shrink: 0;
+    }
+
+    /* ── CTA SECTION ──────────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      background: var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,121,65,0.10) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 18px;
+    }
+    .cta-title em {
+      font-style: italic;
+      color: var(--copper-lt);
+    }
+
+    .cta-desc {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+      max-width: 440px;
+      margin: 0 auto 40px;
+    }
+
+    .cta-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ────────────────────────────────────────── */
+    .footer {
+      padding: 60px 48px 36px;
+      border-top: 1px solid var(--border-lt);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: 0 auto;
+      gap: 48px;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .footer-brand .nav-mark {
+      width: 28px; height: 28px;
+    }
+    .footer-brand .nav-mark span {
+      width: 8px; height: 8px;
+    }
+    .footer-brand .nav-name {
+      font-size: 16px;
+    }
+
+    .footer-tagline {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      max-width: 260px;
+      line-height: 1.6;
+    }
+
+    .footer-links-col h4 {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+
+    .footer-links-col ul {
+      list-style: none;
+    }
+    .footer-links-col li {
+      margin-bottom: 10px;
+    }
+    .footer-links-col a {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+    .footer-links-col a:hover { color: var(--cream); }
+
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 48px auto 0;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-lt);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-copy {
+      font-size: 11px;
+      color: rgba(245,240,232,0.3);
+      letter-spacing: 0.06em;
+    }
+
+    .footer-socials {
+      display: flex;
+      gap: 20px;
+    }
+    .footer-socials a {
+      font-size: 13px;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+    .footer-socials a:hover { color: var(--copper-lt); }
+
+    /* ── SCROLL ANIMATIONS ────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── MOBILE MENU ──────────────────────────────────── */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .menu-toggle span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--cream);
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .menu-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .menu-toggle.active span:nth-child(2) { opacity: 0; }
+    .menu-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    /* ── RESPONSIVE ───────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps-grid { grid-template-columns: repeat(2, 1fr); }
+      .step-card:nth-child(2) { border-right: none; }
+    }
+
+    @media (max-width: 768px) {
+      .navbar { padding: 0 24px; }
+      .menu-toggle { display: flex; }
+      .nav-links {
+        position: fixed;
+        top: 72px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(14,26,16,0.96);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 48px 24px;
+        gap: 24px;
+        transform: translateX(100%);
+        transition: transform 0.35s ease;
+      }
+      .nav-links.open { transform: translateX(0); }
+
+      .hero { padding: 120px 24px 60px; }
+      .hero-title { font-size: clamp(38px, 8vw, 56px); }
+      .hero-stats { gap: 28px; flex-wrap: wrap; }
+
+      .section { padding: 80px 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .step-card { border-right: none; border-bottom: 1px solid var(--border-lt); }
+      .step-card:last-child { border-bottom: none; }
+      .categories-grid { grid-template-columns: 1fr; }
+
+      .footer { padding: 48px 24px 24px; }
+      .footer-content { flex-direction: column; gap: 36px; }
+      .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── NAVIGATION ── -->
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-brand" id="nav-brand">
+      <div class="nav-mark"><span></span></div>
+      <div class="nav-name">StockFlow</div>
+    </a>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#features" id="nav-features">Features</a></li>
+      <li><a href="#how-it-works" id="nav-how">How It Works</a></li>
+      <li><a href="#categories" id="nav-categories">Categories</a></li>
+      <li><a href="{% url 'signin' %}" class="nav-cta" id="nav-signin">Get Started</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-arc hero-arc-1"></div>
+    <div class="hero-arc hero-arc-2"></div>
+    <div class="hero-arc hero-arc-3"></div>
+
+    <div class="hero-content">
+      <div class="hero-label">Inventory &middot; Orders &middot; Commerce</div>
+
+      <h1 class="hero-title">
+        Where <em>Buyers</em><br />
+        Meet <span class="thin">Their</span><br />
+        <em>Sellers</em>
+      </h1>
+
+      <p class="hero-desc">
+        A unified platform connecting buyers and sellers through
+        streamlined inventory management, seamless order processing,
+        and real-time stock visibility — all in one elegant workspace.
+      </p>
+
+      <div class="hero-actions">
+        <a href="{% url 'signup' %}" class="btn-primary" id="hero-cta-signup">
+          Start Trading
+          <span class="btn-arrow">→</span>
+        </a>
+        <a href="#features" class="btn-secondary" id="hero-cta-learn">
+          Learn More
+          <span class="btn-arrow">↓</span>
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-products">2,400+</div>
+          <div class="hero-stat-label">Active Products</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-sellers">580+</div>
+          <div class="hero-stat-label">Verified Sellers</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-orders">18K+</div>
+          <div class="hero-stat-label">Orders Fulfilled</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-uptime">99.9%</div>
+          <div class="hero-stat-label">Platform Uptime</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section class="section" id="features">
+    <div class="section-header reveal">
+      <div class="section-label">Why StockFlow</div>
+      <h2 class="section-title">Everything You Need<br />to <em>Flow</em></h2>
+      <p class="section-subtitle">
+        Built for modern commerce — from real-time inventory tracking
+        to streamlined order management.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal" id="feature-inventory">
+        <span class="feature-icon">📊</span>
+        <h3 class="feature-name">Smart Inventory</h3>
+        <p class="feature-desc">
+          Real-time stock levels, warehouse location tracking,
+          and automatic low-stock alerts keep your shelves optimized.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+
+      <div class="feature-card reveal" id="feature-orders">
+        <span class="feature-icon">🛒</span>
+        <h3 class="feature-name">Seamless Orders</h3>
+        <p class="feature-desc">
+          From cart to delivery — track every order with complete
+          visibility into status, line items, and fulfillment.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+
+      <div class="feature-card reveal" id="feature-catalog">
+        <span class="feature-icon">📦</span>
+        <h3 class="feature-name">Product Catalog</h3>
+        <p class="feature-desc">
+          Rich product listings with descriptions, SKU management,
+          and dynamic pricing — everything sellers need.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+
+      <div class="feature-card reveal" id="feature-analytics">
+        <span class="feature-icon">📈</span>
+        <h3 class="feature-name">Analytics & Insights</h3>
+        <p class="feature-desc">
+          Understand your sales trends, top products, and buyer
+          behavior with intuitive dashboards and reports.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+
+      <div class="feature-card reveal" id="feature-multi-address">
+        <span class="feature-icon">📍</span>
+        <h3 class="feature-name">Multi-Address Delivery</h3>
+        <p class="feature-desc">
+          Buyers manage multiple shipping addresses and select
+          the right one at checkout — fast and flexible.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+
+      <div class="feature-card reveal" id="feature-secure">
+        <span class="feature-icon">🔒</span>
+        <h3 class="feature-name">Secure Platform</h3>
+        <p class="feature-desc">
+          Separate buyer and seller accounts with session-based
+          authentication and protected data access.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="section steps-section" id="how-it-works">
+    <div class="section-header reveal">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">Four Steps to<br /><em>Flow</em></h2>
+      <p class="section-subtitle">
+        Whether you're buying or selling, getting started takes just minutes.
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card reveal" id="step-1">
+        <div class="step-number">01</div>
+        <h3 class="step-title">Create Account</h3>
+        <p class="step-desc">
+          Choose your role — buyer or seller — and sign up
+          with your email in seconds.
+        </p>
+      </div>
+
+      <div class="step-card reveal" id="step-2">
+        <div class="step-number">02</div>
+        <h3 class="step-title">Set Up Shop</h3>
+        <p class="step-desc">
+          Sellers list products with pricing and SKU. Buyers
+          browse the curated catalog.
+        </p>
+      </div>
+
+      <div class="step-card reveal" id="step-3">
+        <div class="step-number">03</div>
+        <h3 class="step-title">Place Orders</h3>
+        <p class="step-desc">
+          Add items to cart, pick a delivery address, and
+          confirm your order — it's that simple.
+        </p>
+      </div>
+
+      <div class="step-card reveal" id="step-4">
+        <div class="step-number">04</div>
+        <h3 class="step-title">Track & Grow</h3>
+        <p class="step-desc">
+          Monitor inventory, manage fulfillment, and scale
+          your business with real-time insights.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CATEGORIES ── -->
+  <section class="section" id="categories">
+    <div class="section-header reveal">
+      <div class="section-label">Browse</div>
+      <h2 class="section-title">Popular <em>Categories</em></h2>
+      <p class="section-subtitle">
+        Discover products across a wide range of categories from verified sellers.
+      </p>
+    </div>
+
+    <div class="categories-grid">
+      <div class="category-card reveal" id="cat-electronics">
+        <div class="category-icon">⚡</div>
+        <div class="category-info">
+          <h3 class="category-name">Electronics</h3>
+          <p class="category-desc">Gadgets, components, and consumer electronics from trusted sellers.</p>
+        </div>
+        <div class="category-count">480+ items</div>
+      </div>
+
+      <div class="category-card reveal" id="cat-fashion">
+        <div class="category-icon">👔</div>
+        <div class="category-info">
+          <h3 class="category-name">Fashion & Apparel</h3>
+          <p class="category-desc">Clothing, accessories, and lifestyle products at wholesale prices.</p>
+        </div>
+        <div class="category-count">720+ items</div>
+      </div>
+
+      <div class="category-card reveal" id="cat-home">
+        <div class="category-icon">🏠</div>
+        <div class="category-info">
+          <h3 class="category-name">Home & Living</h3>
+          <p class="category-desc">Furniture, decor, and essentials for modern living spaces.</p>
+        </div>
+        <div class="category-count">340+ items</div>
+      </div>
+
+      <div class="category-card reveal" id="cat-industrial">
+        <div class="category-icon">🏭</div>
+        <div class="category-info">
+          <h3 class="category-name">Industrial Supplies</h3>
+          <p class="category-desc">Raw materials, tools, and equipment for manufacturing and trade.</p>
+        </div>
+        <div class="category-count">560+ items</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="section cta-section" id="cta">
+    <div class="cta-content reveal">
+      <div class="section-label">Ready?</div>
+      <h2 class="cta-title">Start Your<br /><em>StockFlow</em> Journey</h2>
+      <p class="cta-desc">
+        Join hundreds of buyers and sellers already thriving
+        on the platform. It's free to get started.
+      </p>
+      <div class="cta-actions">
+        <a href="{% url 'signup' %}" class="btn-primary" id="cta-signup">
+          Create Free Account
+          <span class="btn-arrow">→</span>
+        </a>
+        <a href="{% url 'signin' %}" class="btn-secondary" id="cta-signin">
+          Sign In
+          <span class="btn-arrow">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer" id="footer">
+    <div class="footer-content">
+      <div>
+        <div class="footer-brand">
+          <div class="nav-mark"><span></span></div>
+          <div class="nav-name">StockFlow</div>
+        </div>
+        <p class="footer-tagline">
+          Connecting buyers and sellers through streamlined
+          inventory and seamless commerce.
+        </p>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="#categories">Categories</a></li>
+          <li><a href="{% url 'signin' %}">Sign In</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>For Sellers</h4>
+        <ul>
+          <li><a href="{% url 'signup' %}">Start Selling</a></li>
+          <li><a href="#">Inventory Tools</a></li>
+          <li><a href="#">Seller Dashboard</a></li>
+          <li><a href="#">Pricing</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 StockFlow. All rights reserved.</div>
+      <div class="footer-socials">
+        <a href="#" aria-label="Twitter">𝕏</a>
+        <a href="#" aria-label="LinkedIn">in</a>
+        <a href="#" aria-label="GitHub">⌘</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Navbar scroll effect ──
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ── Mobile menu toggle ──
+    const menuToggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      navLinks.classList.toggle('open');
+    });
+    // Close menu when link clicked
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menuToggle.classList.remove('active');
+        navLinks.classList.remove('open');
+      });
+    });
+
+    // ── Scroll reveal ──
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.12,
+      rootMargin: '0px 0px -40px 0px'
+    });
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // ── Smooth scroll for anchor links ──
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ── Staggered animation for grid children ──
+    document.querySelectorAll('.features-grid, .steps-grid, .categories-grid').forEach(grid => {
+      const cards = grid.querySelectorAll('.reveal');
+      cards.forEach((card, i) => {
+        card.style.transitionDelay = `${i * 0.08}s`;
+      });
+    });
+  </script>
+
+</body>
+</html>

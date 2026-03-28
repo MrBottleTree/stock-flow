@@ -3,6 +3,11 @@ from django.contrib import messages
 from core.models import Buyer, Seller
 from django.http import HttpResponse
 
+
+def home(request):
+    return render(request, 'home.html')
+
+
 def signup(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -23,14 +28,14 @@ def signup(request):
             else:
                 Buyer.objects.create(name=name, email=email, phone=phone)
                 messages.success(request, 'Account created! Please sign in.')
-                return redirect('/signin/')
+                return redirect('signin')
         elif user_type == 'seller':
             if Seller.objects.filter(email=email).exists():
                 messages.error(request, 'A seller account with this email already exists.')
             else:
                 Seller.objects.create(name=name, email=email, phone=phone)
                 messages.success(request, 'Account created! Please sign in.')
-                return redirect('/signin/')
+                return redirect('signin')
         else:
             messages.error(request, 'Please select buyer or seller.')
 
@@ -54,7 +59,7 @@ def signin(request):
             request.session['user_type'] = user_type
             request.session['user_name'] = user.name
             messages.success(request, f'Welcome back, {user.name}!')
-            return HttpResponse("SIGNIN WORKS!")
+            return redirect('home')
         else:
             messages.error(request, 'No account found with that email and account type.')
 
@@ -63,7 +68,7 @@ def signin(request):
 
 def signout(request):
     request.session.flush()
-    return redirect('/signin/')
+    return redirect('signin')
 
 # def add_cart(request):
 #     user_id = request.session["user_id"]
