@@ -10,6 +10,8 @@ urlpatterns = [
     # Abhi this is just dummy in the views.py, change it when needed
     path('products/', views.products, name='products'),
     path('inventory/', views.inventory, name='inventory'),
+    path('add-address/', views.add_address, name='add_address'),
+
 
     path('orders/', views.order_history, name='order_history'),
 ]

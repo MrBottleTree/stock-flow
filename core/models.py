@@ -10,9 +10,19 @@ class Buyer(models.Model):
         return self.name
 
 class Address(models.Model):
-    buyer = models.ForeignKey(Buyer,
+    buyer = models.ForeignKey(
+        Buyer,
         on_delete=models.CASCADE,
-        related_name="addresses"
+        related_name="addresses",
+        blank=True,
+        null=True,
+    )
+    seller = models.ForeignKey(
+        'Seller',
+        on_delete=models.CASCADE,
+        related_name="addresses",
+        blank=True,
+        null=True,
     )
     line1 = models.CharField(max_length=255)
     line2 = models.CharField(max_length=255, blank=True, null=True)
@@ -57,7 +67,13 @@ class Inventory(models.Model):
         related_name="inventory"
     )
     quantity = models.IntegerField()
-    warehouse_location = models.CharField(max_length=255)
+    warehouse_location = models.ForeignKey(
+        Address,
+        on_delete=models.SET_NULL,
+        related_name="warehouses",
+        blank=True,
+        null=True,
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
 
