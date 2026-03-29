@@ -18,7 +18,7 @@ def home(request):
     return render(request, 'home.html', context)
 
 def products(request):
-    return HttpResponse("IN PRODUCT PAGE!")
+    return redirect('items')
 
 def inventory(request):
     user, user_type = _get_valid_session_user(request)
@@ -156,7 +156,7 @@ def items(request):
         total_quantity = sum(max(inventory.quantity, 0) for inventory in inventories)
         warehouse_locations = sorted(
             {
-                inventory.warehouse_location
+                str(inventory.warehouse_location)
                 for inventory in inventories
                 if inventory.warehouse_location
             }
@@ -313,57 +313,59 @@ def signout(request):
 def signup_page(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+        confirm = request.POST.get('confirm', '').strip()
         user_type = request.POST.get('user_type', '')
 
-        if not all([name, email, phone]):
+        if not all([name, email, phone, password]):
             messages.error(request, 'All fields are required.')
-
-        elif user_type == 'buyer':
-            buyers = Buyer.objects.filter(email=email)
-            if buyers.count() > 0:
-                buyers = buyers.first()
-                request.session['user_id'] = buyers.id
-                request.session['user_type'] = user_type
-                request.session['user_name'] = buyers.name
-            else:
-                Buyer.objects.create(name=name, email=email, phone=phone)
-                messages.success(request, 'Account created! Please sign in.')
-                return redirect('signin_page')
-        elif user_type == 'seller':
-            if Seller.objects.filter(email=email).exists():
-                messages.error(request, 'A seller account with this email already exists.')
-            else:
-                Seller.objects.create(name=name, email=email, phone=phone)
-                messages.success(request, 'Account created! Please sign in.')
-                return redirect('signin_page')
-        else:
+        elif password != confirm:
+            messages.error(request, 'Passwords do not match.')
+        elif user_type not in ('buyer', 'seller'):
             messages.error(request, 'Please select buyer or seller.')
+        else:
+            user_model = _get_user_model(user_type)
+            if user_model.objects.filter(email=email).exists():
+                messages.error(request, f'An account with this email already exists. Please sign in.')
+            else:
+                user_model.objects.create(
+                    name=name,
+                    email=email,
+                    phone=phone,
+                    password=make_password(password),
+                )
+                messages.success(request, 'Account created! Please sign in.')
+                return redirect('signin_page')
 
     return render(request, 'auth.html')
 
 
 def signin_page(request):
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '').strip()
         user_type = request.POST.get('user_type', '')
 
-        if user_type == 'buyer':
-            user = Buyer.objects.filter(email=email).first()
-        elif user_type == 'seller':
-            user = Seller.objects.filter(email=email).first()
+        if not all([email, password, user_type]):
+            messages.error(request, 'Email, password, and account type are required.')
         else:
-            user = None
-
-        if user:
-            request.session['user_id']   = user.id
-            request.session['user_type'] = user_type
-            request.session['user_name'] = user.name
-            messages.success(request, f'Welcome back, {user.name}!')
-            return redirect('home')
-        else:
-            messages.error(request, 'No account found with that email and account type.')
+            user_model = _get_user_model(user_type)
+            if not user_model:
+                messages.error(request, 'Please select buyer or seller.')
+            else:
+                user = user_model.objects.filter(email=email).first()
+                if not user:
+                    messages.error(request, 'No account found with that email and account type.')
+                elif not user.password or not check_password(password, user.password):
+                    messages.error(request, 'Invalid password.')
+                else:
+                    request.session['user_id'] = user.id
+                    request.session['user_type'] = user_type
+                    request.session['user_name'] = user.name
+                    messages.success(request, f'Welcome back, {user.name}!')
+                    return redirect('home')
 
     return render(request, 'auth.html')
 
