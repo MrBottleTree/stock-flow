@@ -166,6 +166,7 @@ def items(request):
 
         item_rows.append(
             {
+                'id': product.id,
                 'name': product.name,
                 'description': product.description,
                 'image_url': product.image_url,
@@ -426,3 +427,99 @@ def order_history(request):
         'total_spent': total_spent,
     }
     return render(request, 'order_history.html', context)
+
+
+def item_detail(request, product_id):
+    product = Product.objects.select_related('seller').prefetch_related('inventories').filter(id=product_id).first()
+
+    if not product:
+        messages.error(request, 'Product not found.')
+        return redirect('items')
+
+    user, user_type = _get_valid_session_user(request)
+
+    # Handle add-to-cart POST
+    if request.method == 'POST' and request.POST.get('action') == 'add_to_cart':
+        if not user or user_type != 'buyer':
+            messages.error(request, 'You must be signed in as a buyer to add items to cart.')
+            return redirect('item_detail', product_id=product.id)
+
+        try:
+            qty = int(request.POST.get('quantity', 1))
+        except (ValueError, TypeError):
+            qty = 1
+
+        if qty < 1:
+            messages.error(request, 'Quantity must be at least 1.')
+            return redirect('item_detail', product_id=product.id)
+
+        # Calculate available stock
+        inventories = list(product.inventories.all())
+        available_stock = sum(max(inv.quantity, 0) for inv in inventories)
+
+        if available_stock <= 0:
+            messages.error(request, 'This item is out of stock.')
+            return redirect('item_detail', product_id=product.id)
+
+        # Get or create the buyer's cart
+        cart, created = Cart.objects.get_or_create(
+            buyer=user,
+            defaults={'status': 'active'}
+        )
+
+        # Check if product already in cart
+        cart_product = CartProduct.objects.filter(cart=cart, product=product).first()
+
+        if cart_product:
+            new_qty = cart_product.quantity + qty
+            if new_qty > available_stock:
+                messages.error(
+                    request,
+                    f'Cannot add {qty} more. You already have {cart_product.quantity} in cart '
+                    f'and only {available_stock} available.'
+                )
+                return redirect('item_detail', product_id=product.id)
+            cart_product.quantity = new_qty
+            cart_product.save()
+            messages.success(request, f'Updated cart — now {new_qty} × {product.name}.')
+        else:
+            if qty > available_stock:
+                messages.error(
+                    request,
+                    f'Cannot add {qty} units. Only {available_stock} available.'
+                )
+                return redirect('item_detail', product_id=product.id)
+            CartProduct.objects.create(cart=cart, product=product, quantity=qty)
+            messages.success(request, f'Added {qty} × {product.name} to your cart.')
+
+        return redirect('item_detail', product_id=product.id)
+
+    # GET: Build context
+    inventories = list(product.inventories.all())
+    total_quantity = sum(max(inv.quantity, 0) for inv in inventories)
+    warehouse_locations = sorted({
+        str(inv.warehouse_location) for inv in inventories if inv.warehouse_location
+    })
+
+    if total_quantity <= 0:
+        stock_status = 'Out of stock'
+        stock_status_class = 'out'
+    elif total_quantity <= 10:
+        stock_status = 'Low stock'
+        stock_status_class = 'low'
+    else:
+        stock_status = 'In stock'
+        stock_status_class = 'in'
+
+    context = {
+        'product': product,
+        'inventories': inventories,
+        'total_quantity': total_quantity,
+        'warehouse_count': len(warehouse_locations),
+        'warehouse_locations': warehouse_locations,
+        'stock_status': stock_status,
+        'stock_status_class': stock_status_class,
+        'user_type': user_type or '',
+        'user_name': user.name if user else '',
+    }
+    return render(request, 'item_detail.html', context)

@@ -156,6 +156,17 @@
       background: linear-gradient(145deg, var(--glass-md), var(--glass));
       border: 1px solid var(--border);
       padding: 16px;
+      cursor: pointer;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+
+    .card:hover {
+      border-color: var(--copper);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     }
 
     .card-head {
@@ -327,7 +338,7 @@
     {% if item_rows %}
       <section class="catalog">
         {% for item in item_rows %}
-          <article class="card">
+          <a class="card" href="{% url 'item_detail' item.id %}">
             <div class="card-head">
               <div>
                 <h2 class="item-name">{{ item.name }}</h2>
@@ -365,7 +376,7 @@
                 No warehouse registered
               {% endif %}
             </p>
-          </article>
+          </a>
         {% endfor %}
       </section>
     {% else %}

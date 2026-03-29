@@ -14,6 +14,7 @@ urlpatterns = [
     # Abhi this is just dummy in the views.py, change it when needed
     path('products/', views.products, name='products'),
     path('items/', views.items, name='items'),
+    path('items/<int:product_id>/', views.item_detail, name='item_detail'),
     path('inventory/', views.inventory, name='inventory'),
     path('add-address/', views.add_address, name='add_address'),
 
