@@ -1,0 +1,236 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seller Inventory</title>
+  <link rel="stylesheet" href="{% static 'core/auth.css' %}" />
+  <style>
+    .inventory-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .inventory-card {
+      width: min(100%, 600px);
+      background: var(--panel);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 32px;
+      box-shadow: 0 12px 28px rgba(9, 32, 58, 0.12);
+    }
+
+    .inventory-card h1 {
+      margin: 0 0 8px;
+      font-size: 1.8rem;
+      color: var(--text);
+    }
+
+    .inventory-subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .section-divider {
+      margin-top: 24px;
+      margin-bottom: 16px;
+      padding-top: 24px;
+      border-top: 2px solid var(--border);
+    }
+
+    .section-divider h2 {
+      margin: 0 0 16px;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #bfd0e2;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text);
+      background: #fafbfc;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: 2px solid #9ac8f2;
+      border-color: #83b6e3;
+      background: #ffffff;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      background: #f2f7fd;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #e3f1ff;
+      border-color: #8fb6df;
+    }
+
+    .signed-in-info {
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .signed-in-info strong {
+      color: var(--text);
+    }
+
+    @media (max-width: 640px) {
+      .inventory-card {
+        padding: 20px;
+      }
+
+      .inventory-card h1 {
+        font-size: 1.5rem;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="inventory-shell">
+    <div class="inventory-card">
+      <h1>📦 Seller Inventory</h1>
+      <p class="inventory-subtitle">Create new items and manage warehouse inventory</p>
+
+      <div class="signed-in-info">
+        Signed in as <strong>{{ seller_name }}</strong>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" class="form">
+        {% csrf_token %}
+
+        <div class="section-divider">
+          <h2>📋 Item Details</h2>
+        </div>
+
+        <div class="form-group">
+          <label for="name">Item Name *</label>
+          <input id="name" name="name" type="text" placeholder="e.g., Wireless Mouse" required />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description *</label>
+          <textarea id="description" name="description" placeholder="Describe your product..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="image_url">Image URL</label>
+          <input id="image_url" name="image_url" type="url" placeholder="https://example.com/image.jpg" />
+        </div>
+
+        <div class="form-group">
+          <label for="sku">SKU (Stock Keeping Unit) *</label>
+          <input id="sku" name="sku" type="text" placeholder="e.g., WM-2024-001" required />
+        </div>
+
+        <div class="form-group">
+          <label for="price">Price (USD) *</label>
+          <input id="price" name="price" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+        </div>
+
+        <div class="section-divider">
+          <h2>🏭 Inventory Details</h2>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">Quantity *</label>
+          <input id="quantity" name="quantity" type="number" min="0" step="1" placeholder="0" required />
+        </div>
+
+        <div class="form-group">
+          <label for="warehouse_location">Warehouse Location *</label>
+          <select id="warehouse_location" name="warehouse_location" required>
+            <option value="">Select a warehouse</option>
+            {% for location in warehouse_locations %}
+              <option value="{{ location }}">{{ location }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn-primary">✓ Create Item</button>
+          <a href="{% url 'home' %}" class="btn-secondary" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

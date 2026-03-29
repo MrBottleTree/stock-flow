@@ -3,7 +3,7 @@ import json
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from core.models import Buyer, Seller
+from core.models import Buyer, Inventory, Product, Seller
 
 
 class AuthApiTests(TestCase):
@@ -201,3 +201,77 @@ class ItemsPageAuthTests(TestCase):
 
 		response = self.client.get(reverse('items'))
 		self.assertRedirects(response, reverse('home'))
+
+
+class SellerInventoryPageTests(TestCase):
+	def test_inventory_redirects_home_for_unauthenticated_user(self):
+		response = self.client.get(reverse('inventory'))
+		self.assertRedirects(response, reverse('home'))
+
+	def test_inventory_redirects_home_for_buyer(self):
+		buyer = Buyer.objects.create(
+			name='Buyer Only',
+			email='buyer-only@example.com',
+			phone='1234567890',
+			password='x',
+		)
+
+		session = self.client.session
+		session['user_id'] = buyer.id
+		session['user_type'] = 'buyer'
+		session['user_name'] = buyer.name
+		session.save()
+
+		response = self.client.get(reverse('inventory'))
+		self.assertRedirects(response, reverse('home'))
+
+	def test_inventory_renders_for_seller(self):
+		seller = Seller.objects.create(
+			name='Seller Access',
+			email='seller-access@example.com',
+			phone='1234567890',
+			password='x',
+		)
+
+		session = self.client.session
+		session['user_id'] = seller.id
+		session['user_type'] = 'seller'
+		session['user_name'] = seller.name
+		session.save()
+
+		response = self.client.get(reverse('inventory'))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Seller Item Creation')
+
+	def test_inventory_post_creates_product_and_inventory_for_seller(self):
+		seller = Seller.objects.create(
+			name='Seller Create',
+			email='seller-create@example.com',
+			phone='1234567890',
+			password='x',
+		)
+
+		session = self.client.session
+		session['user_id'] = seller.id
+		session['user_type'] = 'seller'
+		session['user_name'] = seller.name
+		session.save()
+
+		response = self.client.post(
+			reverse('inventory'),
+			data={
+				'name': 'Widget Pro',
+				'description': 'Premium widget for testing.',
+				'image_url': 'https://example.com/widget.jpg',
+				'sku': 'WIDGET-PRO-001',
+				'price': '19.99',
+				'quantity': '25',
+				'warehouse_location': 'North Hub',
+			},
+		)
+
+		self.assertRedirects(response, reverse('inventory'))
+		self.assertTrue(Product.objects.filter(sku='WIDGET-PRO-001').exists())
+		product = Product.objects.get(sku='WIDGET-PRO-001')
+		self.assertEqual(product.seller_id, seller.id)
+		self.assertTrue(Inventory.objects.filter(product=product, warehouse_location='North Hub').exists())

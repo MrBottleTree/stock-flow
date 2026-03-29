@@ -1,9 +1,10 @@
 import json
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from core.models import Buyer, Seller
+from core.models import Buyer, Inventory, Product, Seller
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -20,7 +21,56 @@ def products(request):
     return HttpResponse("IN PRODUCT PAGE!")
 
 def inventory(request):
-    return HttpResponse("IN INVENTORY PAGE!")
+    user, user_type = _get_valid_session_user(request)
+    if not user or user_type != 'seller':
+        return redirect('home')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        image_url = request.POST.get('image_url', '').strip()
+        sku = request.POST.get('sku', '').strip()
+        price_raw = request.POST.get('price', '').strip()
+        quantity_raw = request.POST.get('quantity', '').strip()
+        warehouse_location = request.POST.get('warehouse_location', '').strip()
+
+        if not all([name, description, sku, price_raw, quantity_raw, warehouse_location]):
+            messages.error(request, 'Please fill all required item and inventory fields.')
+        elif Product.objects.filter(sku=sku).exists():
+            messages.error(request, 'SKU already exists. Please use a unique SKU.')
+        else:
+            try:
+                price = Decimal(price_raw)
+                quantity = int(quantity_raw)
+            except (InvalidOperation, ValueError):
+                messages.error(request, 'Price must be a decimal number and quantity must be an integer.')
+            else:
+                if price <= 0 or quantity < 0:
+                    messages.error(request, 'Price must be greater than 0 and quantity cannot be negative.')
+                else:
+                    product = Product.objects.create(
+                        seller=user,
+                        name=name,
+                        description=description,
+                        image_url=image_url or None,
+                        sku=sku,
+                        price=price,
+                    )
+
+                    Inventory.objects.create(
+                        product=product,
+                        quantity=quantity,
+                        warehouse_location=warehouse_location,
+                    )
+
+                    messages.success(request, 'Item and inventory created successfully.')
+                    return redirect('inventory')
+
+    context = {
+        'seller_name': user.name,
+        'warehouse_locations': ['North Hub', 'South Hub', 'East Hub', 'West Hub'],
+    }
+    return render(request, 'inventory.html', context)
 
 
 def _get_user_model(user_type):
