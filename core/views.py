@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from core.models import Buyer, Seller
+from core.models import Buyer, Seller, Address
 from django.http import HttpResponse
 
 
@@ -80,6 +80,47 @@ def signin(request):
 def signout(request):
     request.session.flush()
     return redirect('signin')
+
+
+def add_address(request):
+    # Require login
+    if 'user_id' not in request.session:
+        messages.error(request, 'Please sign in first.')
+        return redirect('signin')
+
+    if request.method == 'POST':
+        line1 = request.POST.get('line1', '').strip()
+        line2 = request.POST.get('line2', '').strip()
+        city = request.POST.get('city', '').strip()
+        state = request.POST.get('state', '').strip()
+        postal_code = request.POST.get('postal_code', '').strip()
+        country = request.POST.get('country', '').strip()
+
+        if not all([line1, city, state, postal_code, country]):
+            messages.error(request, 'Please fill in all required fields.')
+        else:
+            user_type = request.session.get('user_type')
+            user_id = request.session.get('user_id')
+
+            address = Address(
+                line1=line1,
+                line2=line2 or None,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                country=country,
+            )
+
+            if user_type == 'buyer':
+                address.buyer = Buyer.objects.get(id=user_id)
+            elif user_type == 'seller':
+                address.seller = Seller.objects.get(id=user_id)
+
+            address.save()
+            messages.success(request, 'Address added successfully!')
+            return redirect('home')
+
+    return render(request, 'add_address.html')
 
 # def add_cart(request):
 #     user_id = request.session["user_id"]
