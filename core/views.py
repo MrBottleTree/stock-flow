@@ -130,9 +130,67 @@ def items(request):
     if not user:
         return redirect('home')
 
+    products = list(
+        Product.objects.select_related('seller').prefetch_related('inventories').all().order_by('-id')
+    )
+
+    item_rows = []
+    total_stock_units = 0
+    low_stock_items = 0
+    out_of_stock_items = 0
+
+    for product in products:
+        inventories = list(product.inventories.all())
+        total_quantity = sum(max(inventory.quantity, 0) for inventory in inventories)
+        warehouse_locations = sorted(
+            {
+                inventory.warehouse_location
+                for inventory in inventories
+                if inventory.warehouse_location
+            }
+        )
+
+        if total_quantity <= 0:
+            stock_status = 'Out of stock'
+            stock_status_class = 'out'
+            out_of_stock_items += 1
+        elif total_quantity <= 10:
+            stock_status = 'Low stock'
+            stock_status_class = 'low'
+            low_stock_items += 1
+        else:
+            stock_status = 'In stock'
+            stock_status_class = 'in'
+
+        total_stock_units += total_quantity
+
+        item_rows.append(
+            {
+                'name': product.name,
+                'description': product.description,
+                'image_url': product.image_url,
+                'sku': product.sku,
+                'price': product.price,
+                'seller_name': product.seller.name,
+                'seller_email': product.seller.email,
+                'total_quantity': total_quantity,
+                'warehouse_locations': warehouse_locations,
+                'warehouse_count': len(warehouse_locations),
+                'stock_status': stock_status,
+                'stock_status_class': stock_status_class,
+            }
+        )
+
     context = {
         'user_name': user.name,
         'user_type': user_type,
+        'item_rows': item_rows,
+        'stats': {
+            'total_items': len(item_rows),
+            'total_stock_units': total_stock_units,
+            'low_stock_items': low_stock_items,
+            'out_of_stock_items': out_of_stock_items,
+        },
     }
     return render(request, 'items.html', context)
 
