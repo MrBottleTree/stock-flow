@@ -20,10 +20,19 @@ def home(request):
 def products(request):
     return HttpResponse("IN PRODUCT PAGE!")
 
-def inventory(request):
+def inventory(request, product_id=None):
     user, user_type = _get_valid_session_user(request)
     if not user or user_type != 'seller':
         return redirect('home')
+
+    product = None
+    existing_inventory = None
+    if product_id:
+        product = Product.objects.filter(id=product_id, seller=user).first()
+        if not product:
+            messages.error(request, 'Product not found or you do not have permission to edit it.')
+            return redirect('inventory')
+        existing_inventory = Inventory.objects.filter(product=product).first()
 
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -36,8 +45,10 @@ def inventory(request):
 
         if not all([name, description, sku, price_raw, quantity_raw, warehouse_location]):
             messages.error(request, 'Please fill all required item and inventory fields.')
-        elif Product.objects.filter(sku=sku).exists():
+        elif not product and Product.objects.filter(sku=sku).exists():
             messages.error(request, 'SKU already exists. Please use a unique SKU.')
+        elif product and Product.objects.filter(sku=sku).exclude(id=product.id).exists():
+            messages.error(request, 'SKU already exists on another product. Please use a unique SKU.')
         else:
             try:
                 price = Decimal(price_raw)
@@ -48,27 +59,65 @@ def inventory(request):
                 if price <= 0 or quantity < 0:
                     messages.error(request, 'Price must be greater than 0 and quantity cannot be negative.')
                 else:
-                    product = Product.objects.create(
-                        seller=user,
-                        name=name,
-                        description=description,
-                        image_url=image_url or None,
-                        sku=sku,
-                        price=price,
+                    # Resolve warehouse location to an Address instance
+                    address, _ = Address.objects.get_or_create(
+                        line1=warehouse_location,
+                        defaults={
+                            'city': 'Hub City',
+                            'state': 'Hub State',
+                            'postal_code': '00000',
+                            'country': 'Hub Country'
+                        }
                     )
 
-                    Inventory.objects.create(
-                        product=product,
-                        quantity=quantity,
-                        warehouse_location=warehouse_location,
-                    )
+                    if product:
+                        # Update existing
+                        product.name = name
+                        product.description = description
+                        product.image_url = image_url or None
+                        product.sku = sku
+                        product.price = price
+                        product.save()
 
-                    messages.success(request, 'Item and inventory created successfully.')
+                        if existing_inventory:
+                            existing_inventory.quantity = quantity
+                            existing_inventory.warehouse_location = address
+                            existing_inventory.save()
+                        else:
+                            Inventory.objects.create(
+                                product=product,
+                                quantity=quantity,
+                                warehouse_location=address,
+                            )
+                        messages.success(request, 'Item and inventory updated successfully.')
+                    else:
+                        # Create new
+                        product = Product.objects.create(
+                            seller=user,
+                            name=name,
+                            description=description,
+                            image_url=image_url or None,
+                            sku=sku,
+                            price=price,
+                        )
+
+                        Inventory.objects.create(
+                            product=product,
+                            quantity=quantity,
+                            warehouse_location=address,
+                        )
+                        messages.success(request, 'Item and inventory created successfully.')
+                    
                     return redirect('inventory')
 
     context = {
         'seller_name': user.name,
         'warehouse_locations': ['North Hub', 'South Hub', 'East Hub', 'West Hub'],
+        'product': product,
+        'inventory_data': {
+            'quantity': existing_inventory.quantity if existing_inventory else '',
+            'warehouse_location': existing_inventory.warehouse_location.line1 if existing_inventory and existing_inventory.warehouse_location else '',
+        },
     }
     return render(request, 'inventory.html', context)
 
@@ -166,11 +215,13 @@ def items(request):
 
         item_rows.append(
             {
+                'id': product.id,
                 'name': product.name,
                 'description': product.description,
                 'image_url': product.image_url,
                 'sku': product.sku,
                 'price': product.price,
+                'seller_id': product.seller.id,
                 'seller_name': product.seller.name,
                 'seller_email': product.seller.email,
                 'total_quantity': total_quantity,
@@ -182,6 +233,7 @@ def items(request):
         )
 
     context = {
+        'user_id': user.id,
         'user_name': user.name,
         'user_type': user_type,
         'item_rows': item_rows,
