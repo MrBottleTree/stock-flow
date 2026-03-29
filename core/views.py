@@ -5,7 +5,18 @@ from django.http import HttpResponse
 
 
 def home(request):
-    return render(request, 'home.html')
+    context = {
+        'is_authenticated': 'user_id' in request.session,
+        'user_type': request.session.get('user_type', ''),
+        'user_name': request.session.get('user_name', ''),
+    }
+    return render(request, 'home.html', context)
+
+def products(request):
+    return HttpResponse("IN PRODUCT PAGE!")
+
+def inventory(request):
+    return HttpResponse("IN INVENTORY PAGE!")
 
 
 def signup(request):
