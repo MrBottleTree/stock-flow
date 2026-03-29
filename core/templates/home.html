@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockFlow — Trade. Flow. Grow.</title>
+  <meta name="description" content="StockFlow connects buyers and sellers through streamlined inventory management, seamless orders, and real-time stock visibility." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:      #1a2e1f;
+      --forest-mid:  #243328;
+      --forest-lt:   #2e4035;
+      --forest-dk:   #0e1a10;
+      --copper:      #c87941;
+      --copper-lt:   #e09060;
+      --copper-glow: rgba(200,121,65,0.25);
+      --cream:       #f5f0e8;
+      --cream-dim:   #d9d0bc;
+      --ink:         #0e1a10;
+      --glass:       rgba(255,255,255,0.04);
+      --glass-md:    rgba(255,255,255,0.06);
+      --border:      rgba(200,121,65,0.22);
+      --border-lt:   rgba(200,121,65,0.10);
+      --shadow:      0 24px 64px rgba(0,0,0,0.45);
+      --radius:      2px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--forest);
+      color: var(--cream);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── NOISE TEXTURE ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAVIGATION ───────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(14,26,16,0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-lt);
+      transition: background 0.3s ease;
+    }
+    .navbar.scrolled { background: rgba(14,26,16,0.92); }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .nav-mark {
+      width: 32px; height: 32px;
+      border: 2px solid var(--copper);
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.3s;
+    }
+    .nav-mark span {
+      display: block;
+      width: 10px; height: 10px;
+      background: var(--copper);
+      transition: background 0.3s;
+    }
+    .nav-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.25s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--copper);
+      transition: width 0.3s ease;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      padding: 9px 22px;
+      background: var(--copper);
+      color: var(--ink) !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.12em !important;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.15s;
+      text-decoration: none;
+      border-radius: 2px;
+    }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { background: var(--copper-lt); transform: translateY(-1px); }
+
+    .nav-signout {
+      padding: 9px 22px;
+      background: transparent !important;
+      color: var(--cream-dim) !important;
+      font-weight: 400 !important;
+      letter-spacing: 0.10em !important;
+      border: 1px solid rgba(245,240,232,0.18) !important;
+      cursor: pointer;
+      transition: border-color 0.25s, color 0.25s;
+      text-decoration: none;
+      border-radius: 2px;
+    }
+    .nav-signout::after { display: none !important; }
+    .nav-signout:hover { border-color: rgba(245,240,232,0.4) !important; color: var(--cream) !important; }
+
+    .nav-user-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(200,121,65,0.1);
+      border: 1px solid rgba(200,121,65,0.22);
+      border-radius: 2px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--copper);
+      font-weight: 500;
+    }
+    .nav-user-icon { font-size: 14px; }
+    .nav-user-type {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      padding: 2px 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+    }
+
+    /* ── HERO SECTION ─────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 100px 48px 80px;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,121,65,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,121,65,0.04) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 800px; height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,121,65,0.07) 0%, transparent 70%);
+      top: -150px; right: -200px;
+      pointer-events: none;
+      animation: pulseGlow 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0%   { opacity: 0.6; transform: scale(1); }
+      100% { opacity: 1;   transform: scale(1.12); }
+    }
+
+    .hero-arc {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(200,121,65,0.10);
+      pointer-events: none;
+    }
+    .hero-arc-1 { width: 700px; height: 700px; top: 5%; right: -280px; animation: floatArc 22s ease-in-out infinite; }
+    .hero-arc-2 { width: 450px; height: 450px; top: 25%; right: -100px; border-color: rgba(200,121,65,0.06); animation: floatArc 16s ease-in-out infinite reverse; }
+    .hero-arc-3 { width: 280px; height: 280px; bottom: 10%; left: -100px; border-color: rgba(200,121,65,0.05); animation: floatArc 19s ease-in-out infinite; }
+
+    @keyframes floatArc {
+      0%, 100% { transform: translate(0, 0); }
+      50%      { transform: translate(18px, -24px); }
+    }
+
+    /* ── HERO LAYOUT (SPLIT 2-COL) ───────────────────── */
+    .hero-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      gap: 72px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      flex: 1;
+      max-width: 560px;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 28px;
+      animation: fadeUp 0.6s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .hero-label::before {
+      content: '';
+      width: 32px; height: 1px;
+      background: var(--copper);
+    }
+    .hero-label-greeting {
+      color: var(--cream);
+    }
+    .hero-label-greeting em {
+      color: var(--copper);
+      font-style: normal;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(44px, 5.5vw, 80px);
+      font-weight: 300;
+      line-height: 1.05;
+      color: var(--cream);
+      margin-bottom: 28px;
+      animation: fadeUp 0.7s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .hero-title em { font-style: italic; color: var(--copper-lt); }
+    .hero-title .thin { font-weight: 300; color: var(--cream-dim); }
+
+    .hero-desc {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.8;
+      max-width: 460px;
+      letter-spacing: 0.02em;
+      margin-bottom: 44px;
+      animation: fadeUp 0.7s 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.7s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      background: var(--copper);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+      border-radius: 2px;
+    }
+    .btn-primary:hover {
+      background: var(--copper-lt);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 36px rgba(200,121,65,0.28);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 36px;
+      background: transparent;
+      color: var(--cream);
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.25s, color 0.25s, background 0.25s;
+      border-radius: 2px;
+    }
+    .btn-secondary:hover {
+      border-color: var(--copper);
+      background: rgba(200,121,65,0.06);
+    }
+
+    .btn-arrow { font-size: 16px; transition: transform 0.25s; }
+    .btn-primary:hover .btn-arrow,
+    .btn-secondary:hover .btn-arrow { transform: translateX(4px); }
+
+    /* Hero Stats Bar */
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 56px;
+      padding-top: 36px;
+      border-top: 1px solid var(--border-lt);
+      animation: fadeUp 0.7s 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .hero-stat {}
+    .hero-stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--copper);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .hero-stat-label {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+    }
+
+    /* ── HERO VISUAL PANEL ──────────────────────────── */
+    .hero-visual {
+      flex: 0 0 400px;
+      position: relative;
+      animation: fadeUp 0.9s 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .panel-main {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(200,121,65,0.20);
+      border-radius: 4px;
+      padding: 24px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      position: relative;
+      z-index: 2;
+      animation: floatPanel 9s ease-in-out infinite;
+    }
+
+    @keyframes floatPanel {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-10px); }
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(200,121,65,0.14);
+    }
+    .panel-dot {
+      width: 8px; height: 8px;
+      background: var(--copper);
+      border-radius: 50%;
+      animation: pulseDot 2.5s ease-in-out infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(200,121,65,0.4); }
+      50%       { opacity: 0.6; box-shadow: 0 0 0 4px rgba(200,121,65,0); }
+    }
+    .panel-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
+    }
+    .panel-live {
+      margin-left: auto;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--copper);
+      background: rgba(200,121,65,0.10);
+      padding: 3px 9px;
+      border-radius: 2px;
+      border: 1px solid rgba(200,121,65,0.18);
+    }
+
+    .panel-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .panel-metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(200,121,65,0.08);
+      border-radius: 2px;
+      transition: background 0.25s;
+    }
+    .panel-metric:hover { background: rgba(200,121,65,0.04); }
+    .panel-metric-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      letter-spacing: 0.04em;
+    }
+    .panel-metric-icon { font-size: 13px; }
+    .panel-metric-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--copper);
+    }
+
+    .panel-divider {
+      height: 1px;
+      background: rgba(200,121,65,0.10);
+      margin: 4px 0 18px;
+    }
+    .panel-listings-label {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-bottom: 10px;
+    }
+    .panel-products {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .panel-product {
+      padding: 10px 11px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(200,121,65,0.09);
+      border-radius: 2px;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .panel-product:hover {
+      border-color: rgba(200,121,65,0.28);
+      background: rgba(200,121,65,0.04);
+    }
+    .panel-product-name {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .panel-product-meta {
+      font-size: 10px;
+      font-weight: 300;
+      color: var(--copper);
+    }
+
+    /* Floating accent cards */
+    .panel-float {
+      position: absolute;
+      background: rgba(10,20,12,0.88);
+      border: 1px solid rgba(200,121,65,0.24);
+      border-radius: 4px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 12px 16px;
+      z-index: 3;
+      min-width: 160px;
+    }
+    .panel-float-order {
+      top: -28px;
+      right: -36px;
+      animation: floatCard1 11s ease-in-out infinite;
+    }
+    @keyframes floatCard1 {
+      0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+      50%       { transform: translateY(-12px) rotate(1deg); }
+    }
+    .panel-float-sellers {
+      bottom: -32px;
+      left: -28px;
+      animation: floatCard2 13s ease-in-out infinite;
+    }
+    @keyframes floatCard2 {
+      0%, 100% { transform: translateY(0) rotate(1.5deg); }
+      50%       { transform: translateY(10px) rotate(-0.5deg); }
+    }
+    .float-label {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 4px;
+    }
+    .float-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--cream);
+      line-height: 1.1;
+    }
+    .float-sub {
+      font-size: 10px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      margin-top: 2px;
+    }
+    .float-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: #72c98a;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .float-check::before { content: '✓'; }
+
+    /* ── SECTIONS ─────────────────────────────────────── */
+    .section {
+      padding: 100px 48px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .section-label {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 18px;
+    }
+    .section-title em { font-style: italic; color: var(--copper-lt); }
+    .section-subtitle {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── FEATURES GRID ────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border-lt);
+      border: 1px solid var(--border-lt);
+    }
+    .feature-card {
+      padding: 36px 32px;
+      background: var(--forest);
+      transition: background 0.3s;
+    }
+    .feature-card:hover { background: var(--forest-mid); }
+    .feature-icon {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 18px;
+    }
+    .feature-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+    .feature-desc {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .feature-link {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--copper);
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+    .feature-link span { transition: transform 0.25s; display: inline-block; }
+    .feature-link:hover { color: var(--copper-lt); }
+    .feature-link:hover span { transform: translateX(4px); }
+
+    /* ── HOW IT WORKS ─────────────────────────────────── */
+    .steps-section {
+      background: var(--forest-mid);
+      max-width: 100%;
+      padding: 100px 48px;
+    }
+    .steps-section .section-header,
+    .steps-section .steps-grid {
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .step-card {
+      padding: 40px 32px;
+      border-right: 1px solid var(--border-lt);
+    }
+    .step-card:last-child { border-right: none; }
+    .step-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 52px;
+      font-weight: 300;
+      color: var(--border);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .step-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+    .step-desc {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+    }
+
+    /* ── CATEGORIES ───────────────────────────────────── */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .category-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 28px 28px;
+      background: var(--glass);
+      border: 1px solid var(--border-lt);
+      border-radius: var(--radius);
+      transition: background 0.3s, border-color 0.3s;
+      cursor: default;
+    }
+    .category-card:hover {
+      background: var(--glass-md);
+      border-color: var(--border);
+    }
+    .category-icon { font-size: 36px; flex-shrink: 0; }
+    .category-info { flex: 1; }
+    .category-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--cream);
+      margin-bottom: 6px;
+    }
+    .category-desc {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.6;
+    }
+    .category-count {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--copper);
+      flex-shrink: 0;
+    }
+
+    /* ── CTA SECTION ──────────────────────────────────── */
+    .cta-section {
+      background: var(--forest-dk);
+      max-width: 100%;
+      padding: 100px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,121,65,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,121,65,0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+    .cta-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,121,65,0.08) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .cta-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .cta-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 18px;
+    }
+    .cta-title em { font-style: italic; color: var(--copper-lt); }
+    .cta-desc {
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      line-height: 1.7;
+      max-width: 440px;
+      margin: 0 auto 40px;
+    }
+    .cta-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .cta-user-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 12px;
+      padding: 6px 16px;
+      border: 1px solid rgba(200,121,65,0.22);
+      border-radius: 2px;
+      background: rgba(200,121,65,0.06);
+    }
+
+    /* ── FOOTER ────────────────────────────────────────── */
+    .footer {
+      padding: 60px 48px 36px;
+      border-top: 1px solid var(--border-lt);
+    }
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: 0 auto;
+      gap: 48px;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .footer-brand .nav-mark { width: 28px; height: 28px; }
+    .footer-brand .nav-mark span { width: 8px; height: 8px; }
+    .footer-brand .nav-name { font-size: 16px; }
+    .footer-tagline {
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      max-width: 260px;
+      line-height: 1.6;
+    }
+    .footer-links-col h4 {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+    .footer-links-col ul { list-style: none; }
+    .footer-links-col li { margin-bottom: 10px; }
+    .footer-links-col a {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+    .footer-links-col a:hover { color: var(--cream); }
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 48px auto 0;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-lt);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-copy {
+      font-size: 11px;
+      color: rgba(245,240,232,0.3);
+      letter-spacing: 0.06em;
+    }
+    .footer-socials { display: flex; gap: 20px; }
+    .footer-socials a {
+      font-size: 13px;
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.25s;
+    }
+    .footer-socials a:hover { color: var(--copper-lt); }
+
+    /* ── SCROLL ANIMATIONS ────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── MOBILE MENU ──────────────────────────────────── */
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .menu-toggle span {
+      display: block;
+      width: 22px; height: 2px;
+      background: var(--cream);
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .menu-toggle.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .menu-toggle.active span:nth-child(2) { opacity: 0; }
+    .menu-toggle.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+    /* ── RESPONSIVE ───────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .hero-visual { flex: 0 0 340px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps-grid { grid-template-columns: repeat(2, 1fr); }
+      .step-card:nth-child(2) { border-right: none; }
+    }
+    @media (max-width: 900px) {
+      .hero-inner { flex-direction: column; gap: 60px; }
+      .hero-content { max-width: 100%; }
+      .hero-visual { flex: unset; width: 100%; max-width: 420px; margin: 0 auto; }
+      .panel-float-order { top: -20px; right: -12px; }
+      .panel-float-sellers { bottom: -22px; left: -12px; }
+    }
+    @media (max-width: 768px) {
+      .navbar { padding: 0 24px; }
+      .menu-toggle { display: flex; }
+      .nav-links {
+        position: fixed;
+        top: 72px; left: 0; right: 0; bottom: 0;
+        background: rgba(14,26,16,0.97);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 48px 24px;
+        gap: 20px;
+        transform: translateX(100%);
+        transition: transform 0.35s ease;
+        overflow-y: auto;
+      }
+      .nav-links.open { transform: translateX(0); }
+      .nav-user-badge { display: none; }
+      .hero { padding: 110px 24px 60px; }
+      .hero-stats { gap: 24px; flex-wrap: wrap; }
+      .hero-visual { display: none; }
+      .section { padding: 80px 24px; }
+      .steps-section { padding: 80px 24px; }
+      .cta-section { padding: 80px 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .step-card { border-right: none; border-bottom: 1px solid var(--border-lt); }
+      .step-card:last-child { border-bottom: none; }
+      .categories-grid { grid-template-columns: 1fr; }
+      .footer { padding: 48px 24px 24px; }
+      .footer-content { flex-direction: column; gap: 36px; }
+      .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── NAVIGATION ── -->
+  <nav class="navbar" id="navbar">
+    <a href="/" class="nav-brand">
+      <div class="nav-mark"><span></span></div>
+      <div class="nav-name">StockFlow</div>
+    </a>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#categories">Categories</a></li>
+
+      {% if is_authenticated %}
+        <li>
+          <span class="nav-user-badge">
+            <span class="nav-user-icon">{% if user_type == 'buyer' %}🛍{% else %}📦{% endif %}</span>
+            {{ user_name }}
+            <span class="nav-user-type">{{ user_type }}</span>
+          </span>
+        </li>
+        {% if user_type == 'buyer' %}
+          <li><a href="{% url 'products' %}">Browse Products</a></li>
+        {% elif user_type == 'seller' %}
+          <li><a href="{% url 'inventory' %}">My Inventory</a></li>
+        {% endif %}
+        <li><a href="{% url 'signout' %}" class="nav-signout">Sign Out</a></li>
+      {% else %}
+        <li><a href="{% url 'signin' %}">Sign In</a></li>
+        <li><a href="{% url 'signup' %}" class="nav-cta">Get Started</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-arc hero-arc-1"></div>
+    <div class="hero-arc hero-arc-2"></div>
+    <div class="hero-arc hero-arc-3"></div>
+
+    <div class="hero-inner">
+      <!-- Left: Text Content -->
+      <div class="hero-content">
+
+        {% if is_authenticated %}
+          <div class="hero-label">
+            <span class="hero-label-greeting">
+              Welcome back, <em>{{ user_name }}</em>
+            </span>
+          </div>
+        {% else %}
+          <div class="hero-label">Inventory &middot; Orders &middot; Commerce</div>
+        {% endif %}
+
+        <h1 class="hero-title">
+          Where <em>Buyers</em><br />
+          Meet <span class="thin">Their</span><br />
+          <em>Sellers</em>
+        </h1>
+
+        {% if is_authenticated and user_type == 'buyer' %}
+          <p class="hero-desc">
+            Ready to discover new products? Browse thousands of listings
+            from verified sellers — find exactly what your business needs,
+            at the right price and quantity.
+          </p>
+        {% elif is_authenticated and user_type == 'seller' %}
+          <p class="hero-desc">
+            Your storefront awaits. Manage your inventory, list new products,
+            and track orders — all from one elegant workspace built
+            for modern commerce.
+          </p>
+        {% else %}
+          <p class="hero-desc">
+            A unified platform connecting buyers and sellers through
+            streamlined inventory management, seamless order processing,
+            and real-time stock visibility — all in one elegant workspace.
+          </p>
+        {% endif %}
+
+        <div class="hero-actions">
+          {% if is_authenticated and user_type == 'buyer' %}
+            <a href="{% url 'products' %}" class="btn-primary">
+              Browse Products
+              <span class="btn-arrow">→</span>
+            </a>
+            <a href="#features" class="btn-secondary">
+              Explore Platform
+              <span class="btn-arrow">↓</span>
+            </a>
+          {% elif is_authenticated and user_type == 'seller' %}
+            <a href="{% url 'inventory' %}" class="btn-primary">
+              Manage Inventory
+              <span class="btn-arrow">→</span>
+            </a>
+            <a href="#features" class="btn-secondary">
+              Explore Platform
+              <span class="btn-arrow">↓</span>
+            </a>
+          {% else %}
+            <a href="{% url 'signup' %}" class="btn-primary">
+              Start Trading
+              <span class="btn-arrow">→</span>
+            </a>
+            <a href="#features" class="btn-secondary">
+              Learn More
+              <span class="btn-arrow">↓</span>
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value">2,400+</div>
+            <div class="hero-stat-label">Active Products</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">580+</div>
+            <div class="hero-stat-label">Verified Sellers</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">18K+</div>
+            <div class="hero-stat-label">Orders Fulfilled</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-value">99.9%</div>
+            <div class="hero-stat-label">Uptime</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Visual Panel -->
+      <div class="hero-visual">
+
+        <!-- Floating: Latest Order -->
+        <div class="panel-float panel-float-order">
+          <div class="float-label">Latest Order</div>
+          <div class="float-value">#1842</div>
+          <div class="float-check">Delivered</div>
+          <div class="float-sub">6 items · 3 mins ago</div>
+        </div>
+
+        <!-- Main Panel -->
+        <div class="panel-main">
+          <div class="panel-header">
+            <div class="panel-dot"></div>
+            <div class="panel-title">StockFlow</div>
+            <div class="panel-live">Live</div>
+          </div>
+
+          <div class="panel-metrics">
+            <div class="panel-metric">
+              <div class="panel-metric-label">
+                <span class="panel-metric-icon">📦</span>
+                Active Products
+              </div>
+              <div class="panel-metric-value">2,400+</div>
+            </div>
+            <div class="panel-metric">
+              <div class="panel-metric-label">
+                <span class="panel-metric-icon">🛒</span>
+                Orders Today
+              </div>
+              <div class="panel-metric-value">156</div>
+            </div>
+            <div class="panel-metric">
+              <div class="panel-metric-label">
+                <span class="panel-metric-icon">🏪</span>
+                Active Sellers
+              </div>
+              <div class="panel-metric-value">580+</div>
+            </div>
+          </div>
+
+          <div class="panel-divider"></div>
+          <div class="panel-listings-label">Featured Listings</div>
+          <div class="panel-products">
+            <div class="panel-product">
+              <div class="panel-product-name">Wireless Headsets</div>
+              <div class="panel-product-meta">₹2,400 · 48 units</div>
+            </div>
+            <div class="panel-product">
+              <div class="panel-product-name">Cotton Fabric</div>
+              <div class="panel-product-meta">₹890 · 200 units</div>
+            </div>
+            <div class="panel-product">
+              <div class="panel-product-name">Steel Rods</div>
+              <div class="panel-product-meta">₹12,000 · 12 units</div>
+            </div>
+            <div class="panel-product">
+              <div class="panel-product-name">Smartphones</div>
+              <div class="panel-product-meta">₹18,500 · 8 units</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating: Sellers badge -->
+        <div class="panel-float panel-float-sellers">
+          <div class="float-label">Verified Sellers</div>
+          <div class="float-value">580+</div>
+          <div class="float-sub">Active on platform</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section class="section" id="features">
+    <div class="section-header reveal">
+      <div class="section-label">Why StockFlow</div>
+      <h2 class="section-title">Everything You Need<br />to <em>Flow</em></h2>
+      <p class="section-subtitle">
+        Built for modern commerce — from real-time inventory tracking
+        to streamlined order management.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <span class="feature-icon">📊</span>
+        <h3 class="feature-name">Smart Inventory</h3>
+        <p class="feature-desc">
+          Real-time stock levels, warehouse location tracking,
+          and automatic low-stock alerts keep your shelves optimized.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🛒</span>
+        <h3 class="feature-name">Seamless Orders</h3>
+        <p class="feature-desc">
+          From cart to delivery — track every order with complete
+          visibility into status, line items, and fulfillment.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📦</span>
+        <h3 class="feature-name">Product Catalog</h3>
+        <p class="feature-desc">
+          Rich product listings with descriptions, SKU management,
+          and dynamic pricing — everything sellers need.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📈</span>
+        <h3 class="feature-name">Analytics & Insights</h3>
+        <p class="feature-desc">
+          Understand your sales trends, top products, and buyer
+          behavior with intuitive dashboards and reports.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📍</span>
+        <h3 class="feature-name">Multi-Address Delivery</h3>
+        <p class="feature-desc">
+          Buyers manage multiple shipping addresses and select
+          the right one at checkout — fast and flexible.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔒</span>
+        <h3 class="feature-name">Secure Platform</h3>
+        <p class="feature-desc">
+          Separate buyer and seller accounts with session-based
+          authentication and protected data access.
+        </p>
+        <a href="#" class="feature-link">Explore <span>→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="steps-section" id="how-it-works">
+    <div class="section-header reveal">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">Four Steps to<br /><em>Flow</em></h2>
+      <p class="section-subtitle">
+        Whether you're buying or selling, getting started takes just minutes.
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-number">01</div>
+        <h3 class="step-title">Create Account</h3>
+        <p class="step-desc">
+          Choose your role — buyer or seller — and sign up
+          with your email in seconds.
+        </p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">02</div>
+        <h3 class="step-title">Set Up Shop</h3>
+        <p class="step-desc">
+          Sellers list products with pricing and SKU. Buyers
+          browse the curated catalog.
+        </p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">03</div>
+        <h3 class="step-title">Place Orders</h3>
+        <p class="step-desc">
+          Add items to cart, pick a delivery address, and
+          confirm your order — it's that simple.
+        </p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">04</div>
+        <h3 class="step-title">Track & Grow</h3>
+        <p class="step-desc">
+          Monitor inventory, manage fulfillment, and scale
+          your business with real-time insights.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CATEGORIES ── -->
+  <section class="section" id="categories">
+    <div class="section-header reveal">
+      <div class="section-label">Browse</div>
+      <h2 class="section-title">Popular <em>Categories</em></h2>
+      <p class="section-subtitle">
+        Discover products across a wide range of categories from verified sellers.
+      </p>
+    </div>
+
+    <div class="categories-grid">
+      <div class="category-card reveal">
+        <div class="category-icon">⚡</div>
+        <div class="category-info">
+          <h3 class="category-name">Electronics</h3>
+          <p class="category-desc">Gadgets, components, and consumer electronics from trusted sellers.</p>
+        </div>
+        <div class="category-count">480+ items</div>
+      </div>
+      <div class="category-card reveal">
+        <div class="category-icon">👔</div>
+        <div class="category-info">
+          <h3 class="category-name">Fashion & Apparel</h3>
+          <p class="category-desc">Clothing, accessories, and lifestyle products at wholesale prices.</p>
+        </div>
+        <div class="category-count">720+ items</div>
+      </div>
+      <div class="category-card reveal">
+        <div class="category-icon">🏠</div>
+        <div class="category-info">
+          <h3 class="category-name">Home & Living</h3>
+          <p class="category-desc">Furniture, decor, and essentials for modern living spaces.</p>
+        </div>
+        <div class="category-count">340+ items</div>
+      </div>
+      <div class="category-card reveal">
+        <div class="category-icon">🏭</div>
+        <div class="category-info">
+          <h3 class="category-name">Industrial Supplies</h3>
+          <p class="category-desc">Raw materials, tools, and equipment for manufacturing and trade.</p>
+        </div>
+        <div class="category-count">560+ items</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="cta-section" id="cta">
+    <div class="cta-glow"></div>
+    <div class="cta-content reveal">
+      {% if is_authenticated %}
+        {% if user_type == 'buyer' %}
+          <div class="section-label">You're In</div>
+          <div class="cta-user-type">🛍 Signed in as Buyer</div>
+          <h2 class="cta-title">Ready to<br /><em>Discover</em> Products?</h2>
+          <p class="cta-desc">
+            Browse thousands of listings from verified sellers.
+            Find exactly what your business needs, right now.
+          </p>
+          <div class="cta-actions">
+            <a href="{% url 'products' %}" class="btn-primary">
+              Browse Products
+              <span class="btn-arrow">→</span>
+            </a>
+            <a href="{% url 'signout' %}" class="btn-secondary">
+              Sign Out
+              <span class="btn-arrow">→</span>
+            </a>
+          </div>
+        {% elif user_type == 'seller' %}
+          <div class="section-label">You're In</div>
+          <div class="cta-user-type">📦 Signed in as Seller</div>
+          <h2 class="cta-title">Manage Your<br /><em>Inventory</em> Now</h2>
+          <p class="cta-desc">
+            List new products, update stock levels, and track
+            your orders — all from your seller dashboard.
+          </p>
+          <div class="cta-actions">
+            <a href="{% url 'inventory' %}" class="btn-primary">
+              Manage Inventory
+              <span class="btn-arrow">→</span>
+            </a>
+            <a href="{% url 'signout' %}" class="btn-secondary">
+              Sign Out
+              <span class="btn-arrow">→</span>
+            </a>
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="section-label">Ready?</div>
+        <h2 class="cta-title">Start Your<br /><em>StockFlow</em> Journey</h2>
+        <p class="cta-desc">
+          Join hundreds of buyers and sellers already thriving
+          on the platform. It's free to get started.
+        </p>
+        <div class="cta-actions">
+          <a href="{% url 'signup' %}" class="btn-primary">
+            Create Free Account
+            <span class="btn-arrow">→</span>
+          </a>
+          <a href="{% url 'signin' %}" class="btn-secondary">
+            Sign In
+            <span class="btn-arrow">→</span>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div>
+        <div class="footer-brand">
+          <div class="nav-mark"><span></span></div>
+          <div class="nav-name">StockFlow</div>
+        </div>
+        <p class="footer-tagline">
+          Connecting buyers and sellers through streamlined
+          inventory and seamless commerce.
+        </p>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="#categories">Categories</a></li>
+          <li><a href="{% url 'signin' %}">Sign In</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>For Sellers</h4>
+        <ul>
+          <li><a href="{% url 'signup' %}">Start Selling</a></li>
+          <li><a href="#">Inventory Tools</a></li>
+          <li><a href="#">Seller Dashboard</a></li>
+          <li><a href="#">Pricing</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 StockFlow. All rights reserved.</div>
+      <div class="footer-socials">
+        <a href="#" aria-label="Twitter">𝕏</a>
+        <a href="#" aria-label="LinkedIn">in</a>
+        <a href="#" aria-label="GitHub">⌘</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Navbar scroll effect ──
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ── Mobile menu toggle ──
+    const menuToggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      navLinks.classList.toggle('open');
+    });
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        menuToggle.classList.remove('active');
+        navLinks.classList.remove('open');
+      });
+    });
+
+    // ── Scroll reveal ──
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ── Smooth scroll for anchor links ──
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ── Staggered grid animations ──
+    document.querySelectorAll('.features-grid, .steps-grid, .categories-grid').forEach(grid => {
+      grid.querySelectorAll('.reveal').forEach((card, i) => {
+        card.style.transitionDelay = `${i * 0.08}s`;
+      });
+    });
+  </script>
+
+</body>
+</html>

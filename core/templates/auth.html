@@ -450,10 +450,12 @@
       <div class="arc"></div>
       <div class="arc arc-2"></div>
 
+      <a href="{% url 'home' %}" style="text-decoration:none;">
       <div class="brand-logo">
         <div class="brand-mark"><span></span></div>
         <div class="brand-name">StockFlow</div>
       </div>
+      </a>
 
       <div class="brand-hero">
         <h1>Trade.<br /><em>Flow.</em><br />Grow.</h1>
@@ -512,7 +514,7 @@
         </div>
 
         <!-- Form -->
-        <form method="POST" id="auth-form" action="/signin/" novalidate>
+        <form method="POST" id="auth-form" action="{% url 'signin' %}" novalidate>
           {% csrf_token %}
           <input type="hidden" name="mode" id="mode-input" value="signin" />
 
@@ -618,7 +620,7 @@
           </button>
 
           <div class="aux-row" id="forgot-row">
-            <a href="/forgot-password/">Forgot password?</a>
+            <a href="#">Forgot password?</a>
           </div>
         </form>
 
@@ -628,8 +630,8 @@
 
   <script>
     const headings = {
-      signin: { title: 'Welcome back',    subtitle: 'Sign in to your StockFlow account.',  action: '/signin/', btn: 'Sign In' },
-      signup: { title: 'Create account',  subtitle: 'Join StockFlow — it\'s free.',         action: '/signup/', btn: 'Create Account' },
+      signin: { title: 'Welcome back',    subtitle: 'Sign in to your StockFlow account.',  action: '{% url "signin" %}', btn: 'Sign In' },
+      signup: { title: 'Create account',  subtitle: 'Join StockFlow — it\'s free.',         action: '{% url "signup" %}', btn: 'Create Account' },
     };
 
     function setMode(mode) {
