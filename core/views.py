@@ -32,9 +32,9 @@ def inventory(request):
         sku = request.POST.get('sku', '').strip()
         price_raw = request.POST.get('price', '').strip()
         quantity_raw = request.POST.get('quantity', '').strip()
-        warehouse_location = request.POST.get('warehouse_location', '').strip()
+        warehouse_location_id = request.POST.get('warehouse_location', '').strip()
 
-        if not all([name, description, sku, price_raw, quantity_raw, warehouse_location]):
+        if not all([name, description, sku, price_raw, quantity_raw, warehouse_location_id]):
             messages.error(request, 'Please fill all required item and inventory fields.')
         elif Product.objects.filter(sku=sku).exists():
             messages.error(request, 'SKU already exists. Please use a unique SKU.')
@@ -48,27 +48,37 @@ def inventory(request):
                 if price <= 0 or quantity < 0:
                     messages.error(request, 'Price must be greater than 0 and quantity cannot be negative.')
                 else:
-                    product = Product.objects.create(
-                        seller=user,
-                        name=name,
-                        description=description,
-                        image_url=image_url or None,
-                        sku=sku,
-                        price=price,
-                    )
+                    # Look up the Address for warehouse_location
+                    try:
+                        address = Address.objects.get(id=warehouse_location_id)
+                    except Address.DoesNotExist:
+                        messages.error(request, 'Selected warehouse address does not exist.')
+                        address = None
 
-                    Inventory.objects.create(
-                        product=product,
-                        quantity=quantity,
-                        warehouse_location=warehouse_location,
-                    )
+                    if address:
+                        product = Product.objects.create(
+                            seller=user,
+                            name=name,
+                            description=description,
+                            image_url=image_url or None,
+                            sku=sku,
+                            price=price,
+                        )
 
-                    messages.success(request, 'Item and inventory created successfully.')
-                    return redirect('inventory')
+                        Inventory.objects.create(
+                            product=product,
+                            quantity=quantity,
+                            warehouse_location=address,
+                        )
 
+                        messages.success(request, 'Item and inventory created successfully.')
+                        return redirect('inventory')
+
+    # Get seller's addresses for the warehouse dropdown
+    seller_addresses = Address.objects.filter(seller=user)
     context = {
         'seller_name': user.name,
-        'warehouse_locations': ['North Hub', 'South Hub', 'East Hub', 'West Hub'],
+        'warehouse_locations': seller_addresses,
     }
     return render(request, 'inventory.html', context)
 
@@ -125,7 +135,7 @@ def _get_valid_session_user(request):
     return user, user_type
 
 
-def items(request):
+def _render_items_page(request, filter_sold_out=False):
     user, user_type = _get_valid_session_user(request)
     if not user:
         return redirect('home')
@@ -141,7 +151,21 @@ def items(request):
 
     for product in products:
         inventories = list(product.inventories.all())
+        
+        # Skip products with no attached inventory
+        if not inventories:
+            continue
+            
         total_quantity = sum(max(inventory.quantity, 0) for inventory in inventories)
+        
+        # Filter logic:
+        # If on 'Sold Out' tab, skip items with stock > 0
+        if filter_sold_out and total_quantity > 0:
+            continue
+        # If on 'All Items' tab, skip items with stock <= 0
+        elif not filter_sold_out and total_quantity <= 0:
+            continue
+
         warehouse_locations = sorted(
             {
                 inventory.warehouse_location
@@ -151,7 +175,7 @@ def items(request):
         )
 
         if total_quantity <= 0:
-            stock_status = 'Out of stock'
+            stock_status = 'Sold out'
             stock_status_class = 'out'
             out_of_stock_items += 1
         elif total_quantity <= 10:
@@ -191,8 +215,19 @@ def items(request):
             'low_stock_items': low_stock_items,
             'out_of_stock_items': out_of_stock_items,
         },
+        'is_sold_out_tab': filter_sold_out,
+        'page_title': 'Sold Out Items' if filter_sold_out else 'Marketplace Item List',
+        'page_subtitle': f"Welcome {user.name} ({user_type}). Browse all products currently out of stock." if filter_sold_out else f"Welcome {user.name} ({user_type}). Browse item health, seller details, and warehouse coverage in one place.",
     }
     return render(request, 'items.html', context)
+
+
+def items(request):
+    return _render_items_page(request, filter_sold_out=False)
+
+
+def sold_out_items(request):
+    return _render_items_page(request, filter_sold_out=True)
 
 
 @csrf_exempt

@@ -294,12 +294,16 @@
     <header class="header">
       <div>
         <span class="eyebrow">Items Page</span>
-        <h1 class="title">Marketplace Item List</h1>
-        <p class="subtitle">Welcome {{ user_name }} ({{ user_type }}). Browse item health, seller details, and warehouse coverage in one place.</p>
+        <h1 class="title">{{ page_title|default:"Marketplace Item List" }}</h1>
+        <p class="subtitle">{{ page_subtitle|default:"Welcome to the marketplace." }}</p>
       </div>
       <div class="actions">
+        <div style="display: flex; gap: 4px; border-right: 1px solid rgba(245,240,232,0.22); padding-right: 14px; margin-right: 4px;">
+          <a class="btn {% if not is_sold_out_tab %}primary{% endif %}" href="{% url 'items' %}">All Items</a>
+          <a class="btn {% if is_sold_out_tab %}primary{% endif %}" href="{% url 'sold_out_items' %}">Sold Out Items</a>
+        </div>
         {% if user_type == 'seller' %}
-          <a class="btn primary" href="{% url 'inventory' %}">Add New Item</a>
+          <a class="btn" href="{% url 'inventory' %}">Add New Item</a>
         {% endif %}
         <a class="btn" href="{% url 'home' %}">Back Home</a>
       </div>
