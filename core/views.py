@@ -2,6 +2,7 @@ import json
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from core.models import *
@@ -426,3 +427,126 @@ def order_history(request):
         'total_spent': total_spent,
     }
     return render(request, 'order_history.html', context)
+
+def profile(request):
+    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
+        messages.error(request, 'Please sign in as a buyer to view your profile.')
+        return redirect('signin_page')
+
+    buyer = Buyer.objects.get(id=request.session['user_id'])
+    orders = (
+        Order.objects
+        .filter(buyer=buyer)
+        .prefetch_related('items__product')
+        .select_related('address')
+        .order_by('-placed_at')
+    )
+    addresses   = Address.objects.filter(buyer=buyer)
+    total_spent = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    return render(request, 'profile.html', {
+        'orders':      orders,
+        'addresses':   addresses,
+        'total_spent': total_spent,
+        'user_name':   buyer.name,
+        'user_email':  buyer.email,
+        'user_type':   'buyer',
+    })
+
+
+def delete_order(request, order_id):
+    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
+        return redirect('signin_page')
+
+    if request.method == 'POST':
+        buyer = Buyer.objects.get(id=request.session['user_id'])
+        order = Order.objects.filter(id=order_id, buyer=buyer).first()
+        if order:
+            order.delete()
+            messages.success(request, f'Order #{order_id} removed from your history.')
+        else:
+            messages.error(request, 'Order not found.')
+    return redirect('profile')
+
+
+def delete_address(request, address_id):
+    if 'user_id' not in request.session:
+        return redirect('signin_page')
+
+    if request.method == 'POST':
+        buyer = Buyer.objects.get(id=request.session['user_id'])
+        address = Address.objects.filter(id=address_id, buyer=buyer).first()
+        if address:
+            address.delete()
+            messages.success(request, 'Address deleted.')
+        else:
+            messages.error(request, 'Address not found.')
+    return redirect('profile')
+
+
+def set_default_address(request, address_id):
+    if 'user_id' not in request.session:
+        return redirect('signin_page')
+
+    if request.method == 'POST':
+        buyer = Buyer.objects.get(id=request.session['user_id'])
+        Address.objects.filter(buyer=buyer).update(is_default=False)
+        address = Address.objects.filter(id=address_id, buyer=buyer).first()
+        if address:
+            address.is_default = True
+            address.save()
+            messages.success(request, 'Default address updated.')
+    return redirect('profile')
+
+
+def update_profile(request):
+    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
+        return redirect('signin_page')
+
+    if request.method == 'POST':
+        buyer = Buyer.objects.get(id=request.session['user_id'])
+        name  = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        if name:
+            buyer.name = name
+            request.session['user_name'] = name   # keep session in sync
+        if email:
+            buyer.email = email
+        buyer.save()
+        messages.success(request, 'Profile updated.')
+    return redirect('profile')
+
+
+def change_password(request):
+    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
+        return redirect('signin_page')
+
+    if request.method == 'POST':
+        buyer        = Buyer.objects.get(id=request.session['user_id'])
+        old_password = request.POST.get('old_password', '')
+        new_password = request.POST.get('new_password', '')
+
+        if not check_password(old_password, buyer.password):
+            messages.error(request, 'Current password is incorrect.')
+            return redirect('profile')
+        if len(new_password) < 8:
+            messages.error(request, 'New password must be at least 8 characters.')
+            return redirect('profile')
+
+        buyer.password = make_password(new_password)
+        buyer.save()
+        messages.success(request, 'Password changed successfully.')
+    return redirect('profile')
+
+
+def delete_account(request):
+    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
+        return redirect('signin_page')
+
+    if request.method == 'POST':
+        buyer = Buyer.objects.get(id=request.session['user_id'])
+        buyer.delete()
+        request.session.flush()
+        messages.success(request, 'Your account has been deleted.')
+        return redirect('home')
+    return redirect('profile')

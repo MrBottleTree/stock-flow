@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile — Amazoff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:      #1a2e1f;
+      --forest-mid:  #243328;
+      --forest-lt:   #2e4035;
+      --forest-dk:   #0e1a10;
+      --copper:      #c87941;
+      --copper-lt:   #e09060;
+      --copper-glow: rgba(200,121,65,0.20);
+      --cream:       #f5f0e8;
+      --cream-dim:   #d9d0bc;
+      --ink:         #0e1a10;
+      --glass:       rgba(255,255,255,0.03);
+      --glass-md:    rgba(255,255,255,0.06);
+      --border:      rgba(200,121,65,0.22);
+      --border-lt:   rgba(200,121,65,0.10);
+      --danger:      #e87d7d;
+      --danger-bg:   rgba(232,125,125,0.08);
+      --danger-bdr:  rgba(232,125,125,0.25);
+      --success:     #7de8a0;
+      --radius:      2px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--forest);
+      color: var(--cream);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* noise texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      height: 72px;
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(14,26,16,0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-lt);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .nav-mark {
+      width: 32px; height: 32px;
+      border: 2px solid var(--copper);
+      transform: rotate(45deg);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .nav-mark span { display: block; width: 10px; height: 10px; background: var(--copper); }
+    .nav-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--cream);
+    }
+
+    .nav-links { list-style: none; display: flex; align-items: center; gap: 36px; }
+    .nav-links a {
+      color: var(--cream-dim); text-decoration: none;
+      font-size: 13px; letter-spacing: 0.08em;
+      text-transform: uppercase; font-weight: 400;
+      transition: color 0.2s; position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -3px; left: 0;
+      width: 0; height: 1px; background: var(--copper); transition: width 0.25s ease;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-links a.active { color: var(--copper-lt); }
+    .nav-links a.active::after { width: 100%; }
+
+    .nav-signout {
+      border: 1px solid var(--border) !important;
+      padding: 6px 16px !important; border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s !important;
+    }
+    .nav-signout::after { display: none !important; }
+    .nav-signout:hover { border-color: rgba(245,240,232,0.4) !important; color: var(--cream) !important; }
+
+    /* ── PAGE LAYOUT ── */
+    .page-wrapper {
+      padding-top: 72px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── PROFILE HERO ── */
+    .profile-hero {
+      padding: 64px 48px 0;
+      background: linear-gradient(180deg, rgba(14,26,16,0.5) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border-lt);
+    }
+
+    .profile-hero-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 36px;
+      padding-bottom: 32px;
+    }
+
+    .avatar-ring {
+      flex-shrink: 0;
+      width: 88px; height: 88px;
+      border: 2px solid var(--copper);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--forest-mid);
+      position: relative;
+    }
+    .avatar-ring::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid var(--border-lt);
+    }
+    .avatar-initials {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px; font-weight: 500;
+      color: var(--copper-lt);
+      letter-spacing: 0.04em;
+    }
+
+    .profile-info { flex: 1; }
+    .profile-greeting {
+      font-size: 12px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--copper);
+      margin-bottom: 6px;
+    }
+    .profile-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 300; color: var(--cream);
+      line-height: 1.1; margin-bottom: 6px;
+    }
+    .profile-name em { font-style: italic; color: var(--copper-lt); }
+    .profile-email {
+      font-size: 13px; color: var(--cream-dim);
+      font-weight: 300; letter-spacing: 0.03em;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 36px;
+      align-self: flex-end;
+      padding-bottom: 6px;
+    }
+    .pstat {
+      text-align: right;
+    }
+    .pstat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px; font-weight: 500;
+      color: var(--cream); line-height: 1;
+    }
+    .pstat-val.copper { color: var(--copper-lt); }
+    .pstat-label {
+      font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--cream-dim);
+      margin-top: 3px;
+    }
+
+    /* ── TABS ── */
+    .tabs-bar {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      gap: 0;
+      border-bottom: none;
+    }
+    .tab-btn {
+      background: none; border: none;
+      padding: 16px 0 12px;
+      margin-right: 36px;
+      font-family: 'Jost', sans-serif;
+      font-size: 12px; font-weight: 400;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--cream-dim); cursor: pointer;
+      position: relative; transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+    .tab-btn::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 0; right: 0;
+      height: 2px; background: var(--copper);
+      transform: scaleX(0);
+      transition: transform 0.25s ease;
+    }
+    .tab-btn:hover { color: var(--cream); }
+    .tab-btn.active { color: var(--copper-lt); }
+    .tab-btn.active::after { transform: scaleX(1); }
+
+    /* ── CONTENT AREA ── */
+    .content-area {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 48px 80px;
+    }
+
+    .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+    .tab-panel.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px; font-weight: 400;
+      color: var(--cream); letter-spacing: 0.03em;
+    }
+    .section-title em { font-style: italic; color: var(--copper-lt); }
+
+    .btn-add {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      border: 1px solid var(--copper);
+      background: transparent;
+      color: var(--copper-lt);
+      font-family: 'Jost', sans-serif;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-add:hover { background: var(--copper-glow); color: var(--cream); }
+    .btn-add svg { width: 14px; height: 14px; }
+
+    /* ── ADDRESS GRID ── */
+    .address-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .address-card {
+      border: 1px solid var(--border-lt);
+      border-radius: var(--radius);
+      background: var(--glass);
+      padding: 24px 24px 18px;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+      animation: fadeIn 0.35s ease;
+    }
+    .address-card:hover { border-color: var(--border); background: var(--glass-md); }
+
+    .address-card.default-card {
+      border-color: var(--border);
+      background: var(--copper-glow);
+    }
+
+    .address-top {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .address-icon {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 15px;
+    }
+
+    .default-badge {
+      font-size: 9px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--copper);
+      border: 1px solid var(--border); padding: 2px 8px;
+      border-radius: 2px; background: var(--copper-glow);
+      align-self: flex-start;
+    }
+
+    .address-line1 {
+      font-size: 14px; font-weight: 500; color: var(--cream);
+      margin-bottom: 4px;
+    }
+    .address-rest {
+      font-size: 13px; color: var(--cream-dim);
+      font-weight: 300; line-height: 1.7;
+    }
+
+    .address-actions {
+      display: flex; gap: 10px;
+      margin-top: 18px; padding-top: 16px;
+      border-top: 1px solid var(--border-lt);
+    }
+
+    .btn-ghost {
+      background: none; border: 1px solid var(--border-lt);
+      color: var(--cream-dim); font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 7px 14px;
+      cursor: pointer; border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--border); color: var(--cream); }
+
+    .btn-danger {
+      background: none; border: 1px solid var(--danger-bdr);
+      color: var(--danger); font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 7px 14px;
+      cursor: pointer; border-radius: 2px;
+      transition: background 0.2s, border-color 0.2s;
+      margin-left: auto;
+    }
+    .btn-danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 72px 24px;
+      border: 1px solid var(--border-lt);
+      border-radius: var(--radius);
+      background: var(--glass);
+    }
+    .empty-icon {
+      width: 56px; height: 56px;
+      border: 1px solid var(--border); transform: rotate(45deg);
+      margin: 0 auto 28px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon-inner {
+      width: 22px; height: 22px;
+      background: var(--forest-lt);
+      display: flex; align-items: center; justify-content: center;
+      transform: rotate(-45deg); font-size: 13px;
+    }
+    .empty-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px; font-weight: 300; color: var(--cream); margin-bottom: 10px;
+    }
+    .empty-text {
+      font-size: 13px; color: var(--cream-dim); font-weight: 300; margin-bottom: 28px;
+    }
+    .btn-primary {
+      display: inline-block; padding: 12px 32px;
+      background: var(--copper); color: var(--ink);
+      text-decoration: none; font-size: 12px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      font-weight: 600; border-radius: 2px; border: none; cursor: pointer;
+      font-family: 'Jost', sans-serif;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { background: var(--copper-lt); transform: translateY(-1px); }
+
+    /* ── ORDERS LIST ── */
+    .orders-list { display: flex; flex-direction: column; gap: 20px; }
+
+    .order-card {
+      border: 1px solid var(--border-lt);
+      border-radius: var(--radius);
+      background: var(--glass);
+      overflow: hidden;
+      transition: border-color 0.2s;
+      animation: fadeIn 0.35s ease;
+    }
+    .order-card:hover { border-color: var(--border); }
+
+    .order-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      background: var(--forest-mid);
+      border-bottom: 1px solid var(--border-lt);
+      flex-wrap: wrap; gap: 12px;
+    }
+
+    .order-meta { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+
+    .order-id {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; font-weight: 500; color: var(--cream); letter-spacing: 0.04em;
+    }
+    .order-id span {
+      font-size: 13px; font-family: 'Jost', sans-serif;
+      color: var(--cream-dim); font-weight: 300; margin-left: 4px;
+    }
+    .order-date { font-size: 12px; letter-spacing: 0.06em; color: var(--cream-dim); font-weight: 300; }
+
+    .order-right { display: flex; align-items: center; gap: 16px; }
+    .order-total {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 500; color: var(--copper-lt);
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: 2px;
+      font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; font-weight: 500; border: 1px solid;
+    }
+    .status-badge::before {
+      content: ''; width: 5px; height: 5px;
+      border-radius: 50%; background: currentColor;
+    }
+    .status-placed     { color: #7db3e8; border-color: rgba(125,179,232,0.3); background: rgba(125,179,232,0.08); }
+    .status-processing { color: #e8c47d; border-color: rgba(232,196,125,0.3); background: rgba(232,196,125,0.08); }
+    .status-shipped    { color: var(--copper-lt); border-color: var(--border); background: var(--copper-glow); }
+    .status-delivered  { color: #7de8a0; border-color: rgba(125,232,160,0.3); background: rgba(125,232,160,0.08); }
+    .status-cancelled  { color: #e87d7d; border-color: rgba(232,125,125,0.3); background: rgba(232,125,125,0.08); }
+
+    .order-body { padding: 0 24px 8px; }
+
+    .items-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .items-table thead tr { border-bottom: 1px solid var(--border-lt); }
+    .items-table th {
+      font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--cream-dim);
+      font-weight: 400; padding: 7px 0; text-align: left;
+    }
+    .items-table th:last-child, .items-table td:last-child { text-align: right; }
+    .items-table tbody tr { border-bottom: 1px solid var(--border-lt); }
+    .items-table tbody tr:last-child { border-bottom: none; }
+    .items-table td {
+      padding: 12px 0; font-size: 14px;
+      color: var(--cream); vertical-align: middle;
+    }
+    .product-name { font-weight: 400; color: var(--cream); }
+    .product-sku {
+      font-size: 10px; color: var(--cream-dim);
+      font-weight: 300; letter-spacing: 0.06em; margin-top: 2px;
+    }
+    .item-qty { color: var(--cream-dim); font-size: 13px; }
+    .item-price { color: var(--cream-dim); font-size: 13px; }
+    .item-total { color: var(--cream); font-weight: 500; }
+
+    .order-footer {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(0,0,0,0.12);
+      border-top: 1px solid var(--border-lt);
+      flex-wrap: wrap; gap: 12px;
+    }
+    .order-address {
+      font-size: 12px; color: var(--cream-dim);
+      font-weight: 300; letter-spacing: 0.02em;
+    }
+    .order-address strong {
+      font-weight: 500; color: var(--cream);
+      display: block; margin-bottom: 2px;
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .order-footer-actions { display: flex; align-items: center; gap: 12px; }
+    .delivered-date { font-size: 12px; color: #7de8a0; letter-spacing: 0.05em; }
+
+    /* ── DELETE ORDER CONFIRM ── */
+    .order-delete-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .order-delete-confirm {
+      display: none; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--danger); letter-spacing: 0.03em;
+    }
+    .order-delete-confirm.visible { display: flex; }
+    .confirm-yes, .confirm-no {
+      background: none; border: 1px solid;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 5px 12px;
+      cursor: pointer; border-radius: 2px; transition: background 0.2s;
+    }
+    .confirm-yes { border-color: var(--danger); color: var(--danger); }
+    .confirm-yes:hover { background: var(--danger-bg); }
+    .confirm-no { border-color: var(--border-lt); color: var(--cream-dim); }
+    .confirm-no:hover { border-color: var(--border); color: var(--cream); }
+
+    /* ── ACCOUNT INFO PANEL ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .info-field {
+      background: var(--glass);
+      border: 1px solid var(--border-lt);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      transition: border-color 0.2s;
+    }
+    .info-field:hover { border-color: var(--border); }
+    .info-field label {
+      font-size: 10px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--copper);
+      display: block; margin-bottom: 8px;
+    }
+    .info-field .info-val {
+      font-size: 15px; color: var(--cream); font-weight: 400;
+    }
+    .info-field .info-val.muted { color: var(--cream-dim); font-weight: 300; font-size: 14px; }
+
+    .info-field input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border-lt);
+      padding: 4px 0;
+      color: var(--cream);
+      font-family: 'Jost', sans-serif;
+      font-size: 15px; font-weight: 400;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .info-field input:focus { border-color: var(--copper); }
+
+    .danger-zone {
+      border: 1px solid var(--danger-bdr);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      background: var(--danger-bg);
+      margin-top: 48px;
+    }
+    .danger-zone-title {
+      font-size: 12px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--danger);
+      margin-bottom: 10px; font-weight: 500;
+    }
+    .danger-zone p {
+      font-size: 13px; color: var(--cream-dim); font-weight: 300; margin-bottom: 18px;
+    }
+
+    /* ── TOAST ── */
+    .toast-container {
+      position: fixed; bottom: 32px; right: 32px;
+      z-index: 999; display: flex; flex-direction: column;
+      gap: 10px; align-items: flex-end;
+    }
+    .toast {
+      padding: 12px 20px;
+      border-radius: 2px; border: 1px solid;
+      font-size: 13px; font-weight: 400; letter-spacing: 0.03em;
+      backdrop-filter: blur(12px);
+      animation: toastIn 0.3s cubic-bezier(0.22,1,0.36,1) both;
+      max-width: 320px;
+    }
+    .toast.success { background: rgba(125,232,160,0.12); border-color: rgba(125,232,160,0.3); color: var(--success); }
+    .toast.error   { background: var(--danger-bg); border-color: var(--danger-bdr); color: var(--danger); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(14,26,16,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--forest-mid);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px;
+      max-width: 420px; width: 90%;
+      animation: fadeIn 0.25s ease;
+    }
+    .modal-icon {
+      width: 48px; height: 48px;
+      border: 1px solid var(--danger-bdr);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 20px;
+      background: var(--danger-bg);
+    }
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 400; color: var(--cream);
+      margin-bottom: 10px;
+    }
+    .modal-text {
+      font-size: 13px; color: var(--cream-dim);
+      font-weight: 300; margin-bottom: 28px; line-height: 1.7;
+    }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    .modal-cancel {
+      background: none; border: 1px solid var(--border-lt);
+      color: var(--cream-dim); font-family: 'Jost', sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 10px 20px;
+      cursor: pointer; border-radius: 2px; transition: border-color 0.2s, color 0.2s;
+    }
+    .modal-cancel:hover { border-color: var(--border); color: var(--cream); }
+    .modal-delete {
+      background: var(--danger-bg); border: 1px solid var(--danger-bdr);
+      color: var(--danger); font-family: 'Jost', sans-serif;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 10px 20px;
+      cursor: pointer; border-radius: 2px; transition: background 0.2s;
+    }
+    .modal-delete:hover { background: rgba(232,125,125,0.16); }
+
+    /* ── FLASH MESSAGES ── */
+    .flash-wrap { max-width: 1180px; margin: 24px auto 0; padding: 0 48px; }
+    .alert {
+      padding: 13px 18px; border-radius: var(--radius);
+      font-size: 14px; border: 1px solid; margin-bottom: 10px;
+    }
+    .alert-error   { background: var(--danger-bg); border-color: var(--danger-bdr); color: var(--danger); }
+    .alert-success { background: rgba(125,232,160,0.08); border-color: rgba(125,232,160,0.3); color: var(--success); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .navbar { padding: 0 20px; }
+      .profile-hero { padding: 48px 20px 0; }
+      .profile-hero-inner { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .profile-stats { align-self: auto; }
+      .tabs-bar { padding: 0 20px; }
+      .content-area { padding: 32px 20px 60px; }
+      .flash-wrap { padding: 0 20px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .address-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .order-header { flex-direction: column; align-items: flex-start; }
+      .items-table th:nth-child(3), .items-table td:nth-child(3) { display: none; }
+      .profile-stats { flex-direction: column; gap: 16px; }
+      .pstat { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="{% url 'home' %}" class="nav-brand">
+      <div class="nav-mark"><span></span></div>
+      <span class="nav-name">Amazoff</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="{% url 'products' %}">Browse</a></li>
+      <li><a href="{% url 'order_history' %}">Orders</a></li>
+      <li><a href="{% url 'profile' %}" class="active">Profile</a></li>
+      <li><a href="{% url 'signout' %}" class="nav-signout">Sign Out</a></li>
+    </ul>
+  </nav>
+
+  <!-- FLASH MESSAGES -->
+  {% if messages %}
+    <div class="flash-wrap" style="margin-top: 96px;">
+      {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="page-wrapper">
+
+    <!-- PROFILE HERO -->
+    <div class="profile-hero">
+      <div class="profile-hero-inner">
+
+        <div class="avatar-ring">
+          <span class="avatar-initials">{{ user_name|slice:":2"|upper }}</span>
+        </div>
+
+        <div class="profile-info">
+          <div class="profile-greeting">Welcome back</div>
+          <h1 class="profile-name"><em>{{ user_name }}</em></h1>
+          <div class="profile-email">{{ user_email }}</div>
+        </div>
+
+        <div class="profile-stats">
+          <div class="pstat">
+            <div class="pstat-val">{{ orders|length }}</div>
+            <div class="pstat-label">Orders</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-val copper">₹{{ total_spent|default:"0" }}</div>
+            <div class="pstat-label">Total Spent</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-val">{{ addresses|length }}</div>
+            <div class="pstat-label">Addresses</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs-bar" style="padding: 0 48px;">
+        <button class="tab-btn active" data-tab="orders">Order History</button>
+        <button class="tab-btn" data-tab="addresses">Addresses</button>
+        <button class="tab-btn" data-tab="account">Account</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+
+      <!-- ── TAB: ORDERS ── -->
+      <div class="tab-panel active" id="tab-orders">
+
+        <div class="section-header">
+          <h2 class="section-title">Order <em>History</em></h2>
+        </div>
+
+        {% if orders %}
+          <div class="orders-list">
+            {% for order in orders %}
+              <div class="order-card" id="order-{{ order.id }}">
+
+                <div class="order-header">
+                  <div class="order-meta">
+                    <div class="order-id">Order <span>#{{ order.id }}</span></div>
+                    <div class="order-date">{{ order.placed_at|date:"d M Y, g:i A" }}</div>
+                  </div>
+                  <div class="order-right">
+                    <span class="order-total">₹{{ order.total_amount }}</span>
+                    {% with status=order.status|lower %}
+                      {% if status == "placed" %}<span class="status-badge status-placed">{{ order.status }}</span>
+                      {% elif status == "processing" %}<span class="status-badge status-processing">{{ order.status }}</span>
+                      {% elif status == "shipped" %}<span class="status-badge status-shipped">{{ order.status }}</span>
+                      {% elif status == "delivered" %}<span class="status-badge status-delivered">{{ order.status }}</span>
+                      {% elif status == "cancelled" %}<span class="status-badge status-cancelled">{{ order.status }}</span>
+                      {% else %}<span class="status-badge">{{ order.status }}</span>{% endif %}
+                    {% endwith %}
+                  </div>
+                </div>
+
+                <div class="order-body">
+                  <table class="items-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Line Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for item in order.items.all %}
+                        <tr>
+                          <td>
+                            <div class="product-name">{{ item.product.name }}</div>
+                            <div class="product-sku">SKU: {{ item.product.sku }}</div>
+                          </td>
+                          <td><span class="item-qty">× {{ item.quantity }}</span></td>
+                          <td><span class="item-price">₹{{ item.unit_price }}</span></td>
+                          <td><span class="item-total">₹{{ item.line_total }}</span></td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="order-footer">
+                  <div class="order-address">
+                    <strong>Shipped to</strong>
+                    {{ order.address.line1 }}{% if order.address.line2 %}, {{ order.address.line2 }}{% endif %},
+                    {{ order.address.city }}, {{ order.address.state }} {{ order.address.postal_code }}
+                  </div>
+                  <div class="order-footer-actions">
+                    {% if order.delivered_at %}
+                      <span class="delivered-date">✓ Delivered {{ order.delivered_at|date:"d M Y" }}</span>
+                    {% endif %}
+                    <!-- Delete Order -->
+                    <div class="order-delete-wrap">
+                      <button class="btn-danger" onclick="openDeleteOrderModal('{{ order.id }}')">Remove</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><div class="empty-icon-inner">📦</div></div>
+            <h2 class="empty-title">No orders yet</h2>
+            <p class="empty-text">When you place your first order, it will appear here.</p>
+            <a href="{% url 'products' %}" class="btn-primary">Browse Products</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ── TAB: ADDRESSES ── -->
+      <div class="tab-panel" id="tab-addresses">
+
+        <div class="section-header">
+          <h2 class="section-title">Saved <em>Addresses</em></h2>
+          <a href="{% url 'add_address' %}" class="btn-add">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Address
+          </a>
+        </div>
+
+        {% if addresses %}
+          <div class="address-grid">
+            {% for address in addresses %}
+              <div class="address-card {% if address.is_default %}default-card{% endif %}" id="addr-{{ address.id }}">
+                <div class="address-top">
+                  <div class="address-icon">🏠</div>
+                  {% if address.is_default %}
+                    <span class="default-badge">Default</span>
+                  {% endif %}
+                </div>
+                <div class="address-line1">{{ address.line1 }}{% if address.line2 %}, {{ address.line2 }}{% endif %}</div>
+                <div class="address-rest">
+                  {{ address.city }}, {{ address.state }}<br>
+                  {{ address.postal_code }}, {{ address.country }}
+                </div>
+                <div class="address-actions">
+                  {% if not address.is_default %}
+                    <form method="POST" action="{% url 'set_default_address' address.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn-ghost">Set Default</button>
+                    </form>
+                  {% endif %}
+                  <button class="btn-danger" onclick="openDeleteAddressModal('{{ address.id }}')">Delete</button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon"><div class="empty-icon-inner">📍</div></div>
+            <h2 class="empty-title">No addresses saved</h2>
+            <p class="empty-text">Add a shipping address to make checkout faster.</p>
+            <a href="{% url 'add_address' %}" class="btn-primary">Add Address</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ── TAB: ACCOUNT ── -->
+      <div class="tab-panel" id="tab-account">
+
+        <div class="section-header">
+          <h2 class="section-title">Account <em>Details</em></h2>
+          <button class="btn-add" onclick="toggleEdit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span id="edit-btn-text">Edit Info</span>
+          </button>
+        </div>
+
+        <form method="POST" action="{% url 'update_profile' %}">
+          {% csrf_token %}
+          <div class="info-grid">
+            <div class="info-field">
+              <label>Full Name</label>
+              <span class="info-val" id="disp-name">{{ user_name }}</span>
+              <input type="text" name="name" value="{{ user_name }}" id="inp-name" style="display:none;" />
+            </div>
+            <div class="info-field">
+              <label>Email Address</label>
+              <span class="info-val" id="disp-email">{{ user_email }}</span>
+              <input type="email" name="email" value="{{ user_email }}" id="inp-email" style="display:none;" />
+            </div>
+            <div class="info-field">
+              <label>Member Since</label>
+              <span class="info-val muted">{{ date_joined|date:"d M Y" }}</span>
+            </div>
+            <div class="info-field">
+              <label>Account Type</label>
+              <span class="info-val muted" style="text-transform:capitalize;">{{ user_type|default:"buyer" }}</span>
+            </div>
+          </div>
+
+          <div id="save-row" style="display:none; margin-top: 4px;">
+            <button type="submit" class="btn-primary" style="padding: 11px 28px;">Save Changes</button>
+          </div>
+        </form>
+
+        <!-- CHANGE PASSWORD -->
+        <div class="section-header" style="margin-top: 40px;">
+          <h2 class="section-title" style="font-size:20px;">Change <em>Password</em></h2>
+        </div>
+        <form method="POST" action="{% url 'change_password' %}">
+          {% csrf_token %}
+          <div class="info-grid" style="margin-bottom: 16px;">
+            <div class="info-field">
+              <label>Current Password</label>
+              <input type="password" name="old_password" placeholder="••••••••" />
+            </div>
+            <div class="info-field">
+              <label>New Password</label>
+              <input type="password" name="new_password" placeholder="••••••••" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" style="padding: 11px 28px;">Update Password</button>
+        </form>
+
+        <!-- DANGER ZONE -->
+        <div class="danger-zone">
+          <div class="danger-zone-title">⚠ Danger Zone</div>
+          <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+          <form method="POST" action="{% url 'delete_account' %}" onsubmit="return confirm('Are you absolutely sure? This will delete your account permanently.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary" style="background: var(--danger); color: white;">Delete My Account</button>
+          </form>
+        </div>
+
+      </div>
+    </div><!-- /content-area -->
+  </div><!-- /page-wrapper -->
+
+  <!-- ── DELETE ORDER MODAL ── -->
+  <div class="modal-overlay" id="modal-order">
+    <div class="modal">
+      <div class="modal-icon">🗑️</div>
+      <div class="modal-title">Remove Order?</div>
+      <p class="modal-text">This will remove the order from your history. It won't affect your delivered items, but the record will no longer appear in your account.</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeModal('modal-order')">Cancel</button>
+        <button class="modal-delete" id="confirm-delete-order">Remove Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DELETE ADDRESS MODAL ── -->
+  <div class="modal-overlay" id="modal-address">
+    <div class="modal">
+      <div class="modal-icon">📍</div>
+      <div class="modal-title">Delete Address?</div>
+      <p class="modal-text">This address will be permanently removed from your account. Any orders linked to this address won't be affected.</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeModal('modal-address')">Cancel</button>
+        <button class="modal-delete" id="confirm-delete-address">Delete Address</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // ── TABS ──
+    const tabBtns  = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-panel');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanes.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + target).classList.add('active');
+      });
+    });
+
+    // ── EDIT PROFILE TOGGLE ──
+    let editing = false;
+    function toggleEdit() {
+      editing = !editing;
+      const displays = ['name', 'email'];
+      displays.forEach(f => {
+        document.getElementById('disp-' + f).style.display = editing ? 'none' : 'block';
+        document.getElementById('inp-' + f).style.display  = editing ? 'block' : 'none';
+      });
+      document.getElementById('edit-btn-text').textContent = editing ? 'Cancel' : 'Edit Info';
+      document.getElementById('save-row').style.display = editing ? 'block' : 'none';
+    }
+
+    // ── MODAL HELPERS ──
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    // Close on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+
+    // ── DELETE ORDER ──
+    let pendingOrderId = null;
+
+    function openDeleteOrderModal(orderId) {
+      pendingOrderId = orderId;
+      openModal('modal-order');
+    }
+
+    document.getElementById('confirm-delete-order').addEventListener('click', () => {
+      if (!pendingOrderId) return;
+      closeModal('modal-order');
+
+      // POST to Django delete_order view
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/orders/${pendingOrderId}/delete/`;   // adjust URL to match your urls.py
+
+      const csrf = document.createElement('input');
+      csrf.type  = 'hidden';
+      csrf.name  = 'csrfmiddlewaretoken';
+      csrf.value = getCookie('csrftoken');
+      form.appendChild(csrf);
+      document.body.appendChild(form);
+      form.submit();
+    });
+
+    // ── DELETE ADDRESS ──
+    let pendingAddressId = null;
+
+    function openDeleteAddressModal(addressId) {
+      pendingAddressId = addressId;
+      openModal('modal-address');
+    }
+
+    document.getElementById('confirm-delete-address').addEventListener('click', () => {
+      if (!pendingAddressId) return;
+      closeModal('modal-address');
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/addresses/${pendingAddressId}/delete/`;   // adjust URL to match your urls.py
+
+      const csrf = document.createElement('input');
+      csrf.type  = 'hidden';
+      csrf.name  = 'csrfmiddlewaretoken';
+      csrf.value = getCookie('csrftoken');
+      form.appendChild(csrf);
+      document.body.appendChild(form);
+      form.submit();
+    });
+
+    // ── CSRF COOKIE HELPER ──
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          cookie = cookie.trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // ── TOAST ──
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
+
+    // ── OPEN TAB FROM URL HASH ──
+    const hash = window.location.hash.replace('#', '');
+    if (['orders','addresses','account'].includes(hash)) {
+      document.querySelector(`[data-tab="${hash}"]`)?.click();
+    }
+  </script>
+</body>
+</html>

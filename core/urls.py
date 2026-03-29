@@ -19,4 +19,11 @@ urlpatterns = [
 
 
     path('orders/', views.order_history, name='order_history'),
+ path('profile/',                              views.profile,             name='profile'),
+path('profile/update/',                       views.update_profile,      name='update_profile'),
+path('profile/change-password/',              views.change_password,     name='change_password'),
+path('profile/delete-account/',               views.delete_account,      name='delete_account'),
+path('orders/<int:order_id>/delete/',         views.delete_order,        name='delete_order'),
+path('addresses/<int:address_id>/delete/',    views.delete_address,      name='delete_address'),
+path('addresses/<int:address_id>/default/',   views.set_default_address, name='set_default_address'),
 ]

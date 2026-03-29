@@ -31,6 +31,7 @@ class Address(models.Model):
     state = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
     country = models.CharField(max_length=100)
+    is_default = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.line1}, {self.city}"
