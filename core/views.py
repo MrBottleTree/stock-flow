@@ -32,9 +32,9 @@ def inventory(request):
         sku = request.POST.get('sku', '').strip()
         price_raw = request.POST.get('price', '').strip()
         quantity_raw = request.POST.get('quantity', '').strip()
-        warehouse_location = request.POST.get('warehouse_location', '').strip()
+        warehouse_location_id = request.POST.get('warehouse_location', '').strip()
 
-        if not all([name, description, sku, price_raw, quantity_raw, warehouse_location]):
+        if not all([name, description, sku, price_raw, quantity_raw, warehouse_location_id]):
             messages.error(request, 'Please fill all required item and inventory fields.')
         elif Product.objects.filter(sku=sku).exists():
             messages.error(request, 'SKU already exists. Please use a unique SKU.')
@@ -48,27 +48,39 @@ def inventory(request):
                 if price <= 0 or quantity < 0:
                     messages.error(request, 'Price must be greater than 0 and quantity cannot be negative.')
                 else:
-                    product = Product.objects.create(
-                        seller=user,
-                        name=name,
-                        description=description,
-                        image_url=image_url or None,
-                        sku=sku,
-                        price=price,
-                    )
+                    # Look up the warehouse address by ID
+                    try:
+                        warehouse_address = Address.objects.get(
+                            id=int(warehouse_location_id), seller=user
+                        )
+                    except (Address.DoesNotExist, ValueError):
+                        messages.error(request, 'Invalid warehouse location selected.')
+                        warehouse_address = None
 
-                    Inventory.objects.create(
-                        product=product,
-                        quantity=quantity,
-                        warehouse_location=warehouse_location,
-                    )
+                    if warehouse_address:
+                        product = Product.objects.create(
+                            seller=user,
+                            name=name,
+                            description=description,
+                            image_url=image_url or None,
+                            sku=sku,
+                            price=price,
+                        )
 
-                    messages.success(request, 'Item and inventory created successfully.')
-                    return redirect('inventory')
+                        Inventory.objects.create(
+                            product=product,
+                            quantity=quantity,
+                            warehouse_location=warehouse_address,
+                        )
 
+                        messages.success(request, 'Item and inventory created successfully.')
+                        return redirect('inventory')
+
+    # Fetch seller's addresses to use as warehouse locations
+    seller_addresses = Address.objects.filter(seller=user)
     context = {
         'seller_name': user.name,
-        'warehouse_locations': ['North Hub', 'South Hub', 'East Hub', 'West Hub'],
+        'warehouse_locations': seller_addresses,
     }
     return render(request, 'inventory.html', context)
 
