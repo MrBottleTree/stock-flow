@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from core.models import Buyer, Seller, Address
+from core.models import Buyer, Seller, Address, Order
 from django.http import HttpResponse
-
+from django.db.models import Sum
 
 def home(request):
     context = {
@@ -122,16 +122,29 @@ def add_address(request):
 
     return render(request, 'add_address.html')
 
-# def add_cart(request):
-#     user_id = request.session["user_id"]
-#     buyer = Buyer.objects.get(id = user_id)
+def order_history(request):
+    # Only buyers can view order history
+    if not request.session.get('user_id') or request.session.get('user_type') != 'buyer':
+        messages.error(request, 'You must be signed in as a buyer to view your orders.')
+        return redirect('signin')
 
-#     if not buyer:
-#         messages.error(request, "NO USER FOUND SOMETHING LIEK TAHT")
-#         return redirect("/")
+    buyer = Buyer.objects.get(id=request.session['user_id'])
+    orders = (
+        Order.objects
+        .filter(buyer=buyer)
+        .prefetch_related('items__product')
+        .select_related('address')
+        .order_by('-placed_at')
+    )
     
-# def add_item(request):
-#     seller_id = request.session["user_id"]
 
-#     item_name = request.POST.get("item_name")
-    
+    total_spent = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    context = {
+        'is_authenticated': True,
+        'user_type': 'buyer',
+        'user_name': request.session.get('user_name', ''),
+        'buyer': buyer,
+        'orders': orders,
+        'total_spent': total_spent,
+    }
+    return render(request, 'order_history.html', context)
