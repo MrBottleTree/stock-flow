@@ -515,7 +515,7 @@
         </div>
 
         <!-- Form -->
-        <form method="POST" id="auth-form" action="{% url 'signin' %}" novalidate>
+        <form method="POST" id="auth-form" action="{% url 'signin_page' %}" novalidate>
           {% csrf_token %}
           <input type="hidden" name="mode" id="mode-input" value="signin" />
 
@@ -631,8 +631,8 @@
 
   <script>
     const headings = {
-      signin: { title: 'Welcome back',    subtitle: 'Sign in to your StockFlow account.',  action: '{% url "signin" %}', btn: 'Sign In' },
-      signup: { title: 'Create account',  subtitle: 'Join StockFlow — it\'s free.',         action: '{% url "signup" %}', btn: 'Create Account' },
+      signin: { title: 'Welcome back',    subtitle: 'Sign in to your StockFlow account.',  action: '{% url "signin_page" %}', btn: 'Sign In' },
+      signup: { title: 'Create account',  subtitle: 'Join StockFlow — it\'s free.',         action: '{% url "signup_page" %}', btn: 'Create Account' },
     };
 
     function setMode(mode) {
