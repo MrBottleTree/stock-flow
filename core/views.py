@@ -137,7 +137,7 @@ def _get_valid_session_user(request):
     return user, user_type
 
 
-def items(request):
+def _render_items_page(request, filter_sold_out=False):
     user, user_type = _get_valid_session_user(request)
     if not user:
         return redirect('home')
@@ -153,7 +153,21 @@ def items(request):
 
     for product in products:
         inventories = list(product.inventories.all())
+        
+        # Skip products with no attached inventory
+        if not inventories:
+            continue
+            
         total_quantity = sum(max(inventory.quantity, 0) for inventory in inventories)
+        
+        # Filter logic:
+        # If on 'Sold Out' tab, skip items with stock > 0
+        if filter_sold_out and total_quantity > 0:
+            continue
+        # If on 'All Items' tab, skip items with stock <= 0
+        elif not filter_sold_out and total_quantity <= 0:
+            continue
+
         warehouse_locations = sorted(
             {
                 str(inventory.warehouse_location)
@@ -163,7 +177,7 @@ def items(request):
         )
 
         if total_quantity <= 0:
-            stock_status = 'Out of stock'
+            stock_status = 'Sold out'
             stock_status_class = 'out'
             out_of_stock_items += 1
         elif total_quantity <= 10:
@@ -204,8 +218,19 @@ def items(request):
             'low_stock_items': low_stock_items,
             'out_of_stock_items': out_of_stock_items,
         },
+        'is_sold_out_tab': filter_sold_out,
+        'page_title': 'Sold Out Items' if filter_sold_out else 'Marketplace Item List',
+        'page_subtitle': f"Welcome {user.name} ({user_type}). Browse all products currently out of stock." if filter_sold_out else f"Welcome {user.name} ({user_type}). Browse item health, seller details, and warehouse coverage in one place.",
     }
     return render(request, 'items.html', context)
+
+
+def items(request):
+    return _render_items_page(request, filter_sold_out=False)
+
+
+def sold_out_items(request):
+    return _render_items_page(request, filter_sold_out=True)
 
 
 @csrf_exempt
