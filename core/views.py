@@ -68,6 +68,7 @@ def inventory(request):
 
     context = {
         'seller_name': user.name,
+        'user_type': user_type,
         'warehouse_locations': ['North Hub', 'South Hub', 'East Hub', 'West Hub'],
     }
     return render(request, 'inventory.html', context)
@@ -398,7 +399,11 @@ def add_address(request):
             messages.success(request, 'Address added successfully!')
             return redirect('home')
 
-    return render(request, 'add_address.html')
+    context = {
+        'user_type': request.session.get('user_type', ''),
+        'user_name': request.session.get('user_name', ''),
+    }
+    return render(request, 'add_address.html', context)
 
 def order_history(request):
     # Only buyers can view order history
