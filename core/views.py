@@ -18,7 +18,7 @@ def home(request):
     return render(request, 'home.html', context)
 
 def products(request):
-    return HttpResponse("IN PRODUCT PAGE!")
+    return redirect('items')
 
 def inventory(request):
     user, user_type = _get_valid_session_user(request)
@@ -48,14 +48,16 @@ def inventory(request):
                 if price <= 0 or quantity < 0:
                     messages.error(request, 'Price must be greater than 0 and quantity cannot be negative.')
                 else:
-                    # Look up the Address for warehouse_location
+                    # Look up the warehouse address by ID
                     try:
-                        address = Address.objects.get(id=warehouse_location_id)
-                    except Address.DoesNotExist:
-                        messages.error(request, 'Selected warehouse address does not exist.')
-                        address = None
+                        warehouse_address = Address.objects.get(
+                            id=int(warehouse_location_id), seller=user
+                        )
+                    except (Address.DoesNotExist, ValueError):
+                        messages.error(request, 'Invalid warehouse location selected.')
+                        warehouse_address = None
 
-                    if address:
+                    if warehouse_address:
                         product = Product.objects.create(
                             seller=user,
                             name=name,
@@ -68,13 +70,13 @@ def inventory(request):
                         Inventory.objects.create(
                             product=product,
                             quantity=quantity,
-                            warehouse_location=address,
+                            warehouse_location=warehouse_address,
                         )
 
                         messages.success(request, 'Item and inventory created successfully.')
                         return redirect('inventory')
 
-    # Get seller's addresses for the warehouse dropdown
+    # Fetch seller's addresses to use as warehouse locations
     seller_addresses = Address.objects.filter(seller=user)
     context = {
         'seller_name': user.name,
@@ -168,7 +170,7 @@ def _render_items_page(request, filter_sold_out=False):
 
         warehouse_locations = sorted(
             {
-                inventory.warehouse_location
+                str(inventory.warehouse_location)
                 for inventory in inventories
                 if inventory.warehouse_location
             }
@@ -190,6 +192,7 @@ def _render_items_page(request, filter_sold_out=False):
 
         item_rows.append(
             {
+                'id': product.id,
                 'name': product.name,
                 'description': product.description,
                 'image_url': product.image_url,
@@ -335,57 +338,59 @@ def signout(request):
 def signup_page(request):
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
         phone = request.POST.get('phone', '').strip()
+        password = request.POST.get('password', '').strip()
+        confirm = request.POST.get('confirm', '').strip()
         user_type = request.POST.get('user_type', '')
 
-        if not all([name, email, phone]):
+        if not all([name, email, phone, password]):
             messages.error(request, 'All fields are required.')
-
-        elif user_type == 'buyer':
-            buyers = Buyer.objects.filter(email=email)
-            if buyers.count() > 0:
-                buyers = buyers.first()
-                request.session['user_id'] = buyers.id
-                request.session['user_type'] = user_type
-                request.session['user_name'] = buyers.name
-            else:
-                Buyer.objects.create(name=name, email=email, phone=phone)
-                messages.success(request, 'Account created! Please sign in.')
-                return redirect('signin_page')
-        elif user_type == 'seller':
-            if Seller.objects.filter(email=email).exists():
-                messages.error(request, 'A seller account with this email already exists.')
-            else:
-                Seller.objects.create(name=name, email=email, phone=phone)
-                messages.success(request, 'Account created! Please sign in.')
-                return redirect('signin_page')
-        else:
+        elif password != confirm:
+            messages.error(request, 'Passwords do not match.')
+        elif user_type not in ('buyer', 'seller'):
             messages.error(request, 'Please select buyer or seller.')
+        else:
+            user_model = _get_user_model(user_type)
+            if user_model.objects.filter(email=email).exists():
+                messages.error(request, f'An account with this email already exists. Please sign in.')
+            else:
+                user_model.objects.create(
+                    name=name,
+                    email=email,
+                    phone=phone,
+                    password=make_password(password),
+                )
+                messages.success(request, 'Account created! Please sign in.')
+                return redirect('signin_page')
 
     return render(request, 'auth.html')
 
 
 def signin_page(request):
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '').strip()
         user_type = request.POST.get('user_type', '')
 
-        if user_type == 'buyer':
-            user = Buyer.objects.filter(email=email).first()
-        elif user_type == 'seller':
-            user = Seller.objects.filter(email=email).first()
+        if not all([email, password, user_type]):
+            messages.error(request, 'Email, password, and account type are required.')
         else:
-            user = None
-
-        if user:
-            request.session['user_id']   = user.id
-            request.session['user_type'] = user_type
-            request.session['user_name'] = user.name
-            messages.success(request, f'Welcome back, {user.name}!')
-            return redirect('home')
-        else:
-            messages.error(request, 'No account found with that email and account type.')
+            user_model = _get_user_model(user_type)
+            if not user_model:
+                messages.error(request, 'Please select buyer or seller.')
+            else:
+                user = user_model.objects.filter(email=email).first()
+                if not user:
+                    messages.error(request, 'No account found with that email and account type.')
+                elif not user.password or not check_password(password, user.password):
+                    messages.error(request, 'Invalid password.')
+                else:
+                    request.session['user_id'] = user.id
+                    request.session['user_type'] = user_type
+                    request.session['user_name'] = user.name
+                    messages.success(request, f'Welcome back, {user.name}!')
+                    return redirect('home')
 
     return render(request, 'auth.html')
 
@@ -461,3 +466,99 @@ def order_history(request):
         'total_spent': total_spent,
     }
     return render(request, 'order_history.html', context)
+
+
+def item_detail(request, product_id):
+    product = Product.objects.select_related('seller').prefetch_related('inventories').filter(id=product_id).first()
+
+    if not product:
+        messages.error(request, 'Product not found.')
+        return redirect('items')
+
+    user, user_type = _get_valid_session_user(request)
+
+    # Handle add-to-cart POST
+    if request.method == 'POST' and request.POST.get('action') == 'add_to_cart':
+        if not user or user_type != 'buyer':
+            messages.error(request, 'You must be signed in as a buyer to add items to cart.')
+            return redirect('item_detail', product_id=product.id)
+
+        try:
+            qty = int(request.POST.get('quantity', 1))
+        except (ValueError, TypeError):
+            qty = 1
+
+        if qty < 1:
+            messages.error(request, 'Quantity must be at least 1.')
+            return redirect('item_detail', product_id=product.id)
+
+        # Calculate available stock
+        inventories = list(product.inventories.all())
+        available_stock = sum(max(inv.quantity, 0) for inv in inventories)
+
+        if available_stock <= 0:
+            messages.error(request, 'This item is out of stock.')
+            return redirect('item_detail', product_id=product.id)
+
+        # Get or create the buyer's cart
+        cart, created = Cart.objects.get_or_create(
+            buyer=user,
+            defaults={'status': 'active'}
+        )
+
+        # Check if product already in cart
+        cart_product = CartProduct.objects.filter(cart=cart, product=product).first()
+
+        if cart_product:
+            new_qty = cart_product.quantity + qty
+            if new_qty > available_stock:
+                messages.error(
+                    request,
+                    f'Cannot add {qty} more. You already have {cart_product.quantity} in cart '
+                    f'and only {available_stock} available.'
+                )
+                return redirect('item_detail', product_id=product.id)
+            cart_product.quantity = new_qty
+            cart_product.save()
+            messages.success(request, f'Updated cart — now {new_qty} × {product.name}.')
+        else:
+            if qty > available_stock:
+                messages.error(
+                    request,
+                    f'Cannot add {qty} units. Only {available_stock} available.'
+                )
+                return redirect('item_detail', product_id=product.id)
+            CartProduct.objects.create(cart=cart, product=product, quantity=qty)
+            messages.success(request, f'Added {qty} × {product.name} to your cart.')
+
+        return redirect('item_detail', product_id=product.id)
+
+    # GET: Build context
+    inventories = list(product.inventories.all())
+    total_quantity = sum(max(inv.quantity, 0) for inv in inventories)
+    warehouse_locations = sorted({
+        str(inv.warehouse_location) for inv in inventories if inv.warehouse_location
+    })
+
+    if total_quantity <= 0:
+        stock_status = 'Out of stock'
+        stock_status_class = 'out'
+    elif total_quantity <= 10:
+        stock_status = 'Low stock'
+        stock_status_class = 'low'
+    else:
+        stock_status = 'In stock'
+        stock_status_class = 'in'
+
+    context = {
+        'product': product,
+        'inventories': inventories,
+        'total_quantity': total_quantity,
+        'warehouse_count': len(warehouse_locations),
+        'warehouse_locations': warehouse_locations,
+        'stock_status': stock_status,
+        'stock_status_class': stock_status_class,
+        'user_type': user_type or '',
+        'user_name': user.name if user else '',
+    }
+    return render(request, 'item_detail.html', context)

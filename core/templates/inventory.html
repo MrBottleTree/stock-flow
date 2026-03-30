@@ -451,14 +451,21 @@
 
             <div class="form-group">
               <label for="warehouse_location">Warehouse Location *</label>
-              <select id="warehouse_location" name="warehouse_location" required>
-                <option value="">Select an address</option>
-                {% for address in warehouse_locations %}
-                  <option value="{{ address.id }}">{{ address }}</option>
-                {% empty %}
-                  <option value="" disabled>No addresses — add one first</option>
-                {% endfor %}
-              </select>
+              {% if warehouse_locations %}
+                <select id="warehouse_location" name="warehouse_location" required>
+                  <option value="">Select a warehouse</option>
+                  {% for addr in warehouse_locations %}
+                    <option value="{{ addr.id }}">{{ addr.line1 }}, {{ addr.city }}</option>
+                  {% endfor %}
+                </select>
+              {% else %}
+                <select id="warehouse_location" name="warehouse_location" required disabled>
+                  <option value="">No addresses found</option>
+                </select>
+                <p style="font-size: 12px; color: var(--cream-dim); margin-top: 6px;">
+                  You need to <a href="{% url 'add_address' %}" style="color: var(--copper-lt); text-decoration: none; font-weight: 500;">add a warehouse address</a> first.
+                </p>
+              {% endif %}
             </div>
           </div>
 
