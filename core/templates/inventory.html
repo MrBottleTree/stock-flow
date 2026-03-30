@@ -452,9 +452,11 @@
             <div class="form-group">
               <label for="warehouse_location">Warehouse Location *</label>
               <select id="warehouse_location" name="warehouse_location" required>
-                <option value="">Select a warehouse</option>
-                {% for location in warehouse_locations %}
-                  <option value="{{ location }}">{{ location }}</option>
+                <option value="">Select an address</option>
+                {% for address in warehouse_locations %}
+                  <option value="{{ address.id }}">{{ address }}</option>
+                {% empty %}
+                  <option value="" disabled>No addresses — add one first</option>
                 {% endfor %}
               </select>
             </div>
