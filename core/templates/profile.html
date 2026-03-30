@@ -680,10 +680,11 @@
   <nav class="navbar">
     <a href="{% url 'home' %}" class="nav-brand">
       <div class="nav-mark"><span></span></div>
-      <span class="nav-name">Amazoff</span>
+      <span class="nav-name">StockFlow</span>
     </a>
     <ul class="nav-links">
-      <li><a href="{% url 'products' %}">Browse</a></li>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'items' %}">Browse</a></li>
       <li><a href="{% url 'order_history' %}">Orders</a></li>
       <li><a href="{% url 'profile' %}" class="active">Profile</a></li>
       <li><a href="{% url 'signout' %}" class="nav-signout">Sign Out</a></li>
@@ -827,7 +828,7 @@
             <div class="empty-icon"><div class="empty-icon-inner">📦</div></div>
             <h2 class="empty-title">No orders yet</h2>
             <p class="empty-text">When you place your first order, it will appear here.</p>
-            <a href="{% url 'products' %}" class="btn-primary">Browse Products</a>
+            <a href="{% url 'items' %}" class="btn-primary">Browse Products</a>
           </div>
         {% endif %}
       </div>
