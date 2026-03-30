@@ -529,9 +529,10 @@
           <span class="nav-user-type">buyer</span>
         </span>
       </li>
-      <li><a href="{% url 'products' %}">Browse Products</a></li>
+      <li><a href="{% url 'items' %}">Item List</a></li>
       <li><a href="{% url 'order_history' %}">My Orders</a></li>
-      <li><a href="{% url 'signout' %}" class="nav-signout">Sign Out</a></li>
+      <li><a href="{% url 'add_address' %}">Add Address</a></li>
+      <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
     </ul>
   </nav>
 
@@ -679,7 +680,7 @@
           </div>
           <h2 class="empty-title">No orders yet</h2>
           <p class="empty-text">When you place your first order, it will appear here.</p>
-          <a href="{% url 'products' %}" class="btn-primary">Browse Products</a>
+          <a href="{% url 'items' %}" class="btn-primary">Browse Item List</a>
         </div>
       {% endif %}
 
