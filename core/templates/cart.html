@@ -561,6 +561,76 @@
     }
     .btn-primary:hover { background: var(--copper-lt); transform: translateY(-1px); }
 
+    /* ── CART CONTROLS (qty update + remove) ── */
+    .cart-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .qty-form {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .qty-input {
+      width: 58px;
+      background: rgba(14,26,16,0.6);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      padding: 5px 8px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      text-align: center;
+      border-radius: 2px;
+      transition: border-color 0.2s;
+    }
+
+    .qty-input:focus {
+      outline: none;
+      border-color: var(--copper);
+    }
+
+    .btn-cart-action {
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid;
+      background: transparent;
+    }
+
+    .btn-update {
+      color: var(--copper);
+      border-color: rgba(200,121,65,0.35);
+    }
+
+    .btn-update:hover {
+      background: rgba(200,121,65,0.10);
+      border-color: var(--copper);
+    }
+
+    .btn-remove {
+      color: #e87d7d;
+      border-color: rgba(232,125,125,0.28);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-remove:hover {
+      background: rgba(232,125,125,0.10);
+      border-color: rgba(232,125,125,0.55);
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 900px) {
       .content {
@@ -592,10 +662,11 @@
           <span class="nav-user-type">buyer</span>
         </span>
       </li>
-      <li><a href="{% url 'products' %}">Browse Products</a></li>
-      <li><a href="{% url 'cart' %}">My Cart</a></li>
+      <li><a href="{% url 'items' %}">Item List</a></li>
+      <li><a href="{% url 'cart' %}" style="color:var(--copper);">🛒 My Cart</a></li>
       <li><a href="{% url 'order_history' %}">My Orders</a></li>
-      <li><a href="{% url 'signout' %}" class="nav-signout">Sign Out</a></li>
+      <li><a href="{% url 'add_address' %}">Add Address</a></li>
+      <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
     </ul>
   </nav>
 
@@ -658,14 +729,31 @@
                     {% endif %}
                   </td>
                   <td>
-                    <span class="qty-badge">{{ item.quantity }}</span>
-                    {% if item.stock > 0 and not item.insufficient %}
-                      <span class="stock-tag stock-ok">✓ {{ item.stock }} available</span>
-                    {% elif item.insufficient and item.stock > 0 %}
-                      <span class="stock-tag stock-low">{{ item.stock }} left</span>
-                    {% else %}
-                      <span class="stock-tag stock-out">Out of stock</span>
-                    {% endif %}
+                    <!-- Quantity update form -->
+                    <form method="POST" action="{% url 'cart_update' item.product.id %}" class="qty-form">
+                      {% csrf_token %}
+                      <input
+                        type="number"
+                        name="quantity"
+                        value="{{ item.quantity }}"
+                        min="1"
+                        max="{{ item.stock }}"
+                        class="qty-input"
+                        aria-label="Quantity"
+                      />
+                      <button type="submit" class="btn-cart-action btn-update">Update</button>
+                    </form>
+                    <!-- Remove link -->
+                    <div class="cart-controls">
+                      <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove btn-cart-action">✕ Remove</a>
+                      {% if item.stock > 0 and not item.insufficient %}
+                        <span class="stock-tag stock-ok">✓ {{ item.stock }} available</span>
+                      {% elif item.insufficient and item.stock > 0 %}
+                        <span class="stock-tag stock-low">{{ item.stock }} left</span>
+                      {% else %}
+                        <span class="stock-tag stock-out">Out of stock</span>
+                      {% endif %}
+                    </div>
                   </td>
                   <td><span class="item-price">₹{{ item.product.price }}</span></td>
                   <td><span class="item-total">₹{{ item.line_total }}</span></td>
@@ -759,7 +847,7 @@
           </div>
           <h2 class="empty-title">Your cart is empty</h2>
           <p class="empty-text">Browse products and add items to your cart to get started.</p>
-          <a href="{% url 'products' %}" class="btn-primary">Browse Products</a>
+          <a href="{% url 'items' %}" class="btn-primary">Browse Items →</a>
         </div>
 
       {% endif %}

@@ -478,7 +478,10 @@ def add_address(request):
 
             address.save()
             messages.success(request, 'Address added successfully!')
-            return redirect('home')
+            # Redirect to the most useful page for each role
+            if request.session.get('user_type') == 'seller':
+                return redirect('inventory')
+            return redirect('items')
 
     context = {
         'user_type': request.session.get('user_type', ''),
@@ -657,6 +660,75 @@ def checkout(request):
 
     messages.success(request, f'Order #{order.id} placed successfully!')
     return redirect('order_history')
+
+
+def cart_remove(request, product_id):
+    """Remove a single product from the buyer's cart."""
+    if not request.session.get('user_id') or request.session.get('user_type') != 'buyer':
+        return redirect('signin_page')
+
+    buyer = Buyer.objects.get(id=request.session['user_id'])
+    cart_obj = Cart.objects.filter(buyer=buyer).first()
+    if cart_obj:
+        deleted, _ = CartProduct.objects.filter(
+            cart=cart_obj, product_id=product_id
+        ).delete()
+        if deleted:
+            messages.success(request, 'Item removed from cart.')
+        else:
+            messages.error(request, 'Item not found in cart.')
+    return redirect('cart')
+
+
+def cart_update(request, product_id):
+    """Update the quantity of a product in the buyer's cart (POST only)."""
+    if request.method != 'POST':
+        return redirect('cart')
+
+    if not request.session.get('user_id') or request.session.get('user_type') != 'buyer':
+        return redirect('signin_page')
+
+    buyer = Buyer.objects.get(id=request.session['user_id'])
+    cart_obj = Cart.objects.filter(buyer=buyer).first()
+    if not cart_obj:
+        return redirect('cart')
+
+    try:
+        qty = int(request.POST.get('quantity', 1))
+    except (ValueError, TypeError):
+        messages.error(request, 'Invalid quantity.')
+        return redirect('cart')
+
+    if qty < 1:
+        # Treat qty < 1 as a remove
+        CartProduct.objects.filter(cart=cart_obj, product_id=product_id).delete()
+        messages.success(request, 'Item removed from cart.')
+        return redirect('cart')
+
+    product = Product.objects.prefetch_related('inventories').filter(id=product_id).first()
+    if not product:
+        messages.error(request, 'Product not found.')
+        return redirect('cart')
+
+    available = sum(
+        max(inv.quantity, 0) for inv in product.inventories.all()
+    )
+    if qty > available:
+        messages.error(
+            request,
+            f'Only {available} unit{"s" if available != 1 else ""} of '
+            f'"{product.name}" available.'
+        )
+        return redirect('cart')
+
+    updated = CartProduct.objects.filter(
+        cart=cart_obj, product_id=product_id
+    ).update(quantity=qty)
+    if updated:
+        messages.success(request, f'Cart updated — {qty} × {product.name}.')
+    else:
+        messages.error(request, 'Item not found in cart.')
+    return redirect('cart')
 
 
 def item_detail(request, product_id):

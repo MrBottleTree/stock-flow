@@ -494,6 +494,7 @@
           <a href="{% url 'home' %}" class="quick-nav-link">Home</a>
           <a href="{% url 'items' %}" class="quick-nav-link">Item List</a>
           {% if user_type == 'buyer' %}
+            <a href="{% url 'cart' %}" class="quick-nav-link">🛒 My Cart</a>
             <a href="{% url 'order_history' %}" class="quick-nav-link">My Orders</a>
           {% elif user_type == 'seller' %}
             <a href="{% url 'inventory' %}" class="quick-nav-link">My Inventory</a>
