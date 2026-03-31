@@ -1003,15 +1003,18 @@
             <span class="nav-user-type">{{ user_type }}</span>
           </span>
         </li>
-        {% if user_type == 'buyer' %}
-          <li><a href="{% url 'products' %}">Browse Products</a></li>
-        {% elif user_type == 'seller' %}
+        <li><a href="{% url 'items' %}">Item List</a></li>
+        {% if user_type == 'seller' %}
           <li><a href="{% url 'inventory' %}">My Inventory</a></li>
+          <li><a href="{% url 'add_address' %}">Add Address</a></li>
+        {% elif user_type == 'buyer' %}
+          <li><a href="{% url 'order_history' %}">My Orders</a></li>
+          <li><a href="{% url 'add_address' %}">Add Address</a></li>
         {% endif %}
-        <li><a href="{% url 'signout' %}" class="nav-signout">Sign Out</a></li>
+        <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
       {% else %}
-        <li><a href="{% url 'signin' %}">Sign In</a></li>
-        <li><a href="{% url 'signup' %}" class="nav-cta">Get Started</a></li>
+        <li><a href="{% url 'signin_page' %}">Sign In</a></li>
+        <li><a href="{% url 'signup_page' %}" class="nav-cta">Get Started</a></li>
       {% endif %}
     </ul>
   </nav>
@@ -1065,8 +1068,8 @@
 
         <div class="hero-actions">
           {% if is_authenticated and user_type == 'buyer' %}
-            <a href="{% url 'products' %}" class="btn-primary">
-              Browse Products
+            <a href="{% url 'items' %}" class="btn-primary">
+              Browse Item List
               <span class="btn-arrow">→</span>
             </a>
             <a href="#features" class="btn-secondary">
@@ -1075,15 +1078,15 @@
             </a>
           {% elif is_authenticated and user_type == 'seller' %}
             <a href="{% url 'inventory' %}" class="btn-primary">
-              Manage Inventory
+              My Inventory
               <span class="btn-arrow">→</span>
             </a>
-            <a href="#features" class="btn-secondary">
-              Explore Platform
-              <span class="btn-arrow">↓</span>
+            <a href="{% url 'items' %}" class="btn-secondary">
+              Browse Item List
+              <span class="btn-arrow">→</span>
             </a>
           {% else %}
-            <a href="{% url 'signup' %}" class="btn-primary">
+            <a href="{% url 'signup_page' %}" class="btn-primary">
               Start Trading
               <span class="btn-arrow">→</span>
             </a>
@@ -1365,12 +1368,12 @@
             Find exactly what your business needs, right now.
           </p>
           <div class="cta-actions">
-            <a href="{% url 'products' %}" class="btn-primary">
-              Browse Products
+            <a href="{% url 'items' %}" class="btn-primary">
+              Browse Item List
               <span class="btn-arrow">→</span>
             </a>
-            <a href="{% url 'signout' %}" class="btn-secondary">
-              Sign Out
+            <a href="{% url 'order_history' %}" class="btn-secondary">
+              My Orders
               <span class="btn-arrow">→</span>
             </a>
           </div>
@@ -1384,11 +1387,11 @@
           </p>
           <div class="cta-actions">
             <a href="{% url 'inventory' %}" class="btn-primary">
-              Manage Inventory
+              My Inventory
               <span class="btn-arrow">→</span>
             </a>
-            <a href="{% url 'signout' %}" class="btn-secondary">
-              Sign Out
+            <a href="{% url 'items' %}" class="btn-secondary">
+              Browse Item List
               <span class="btn-arrow">→</span>
             </a>
           </div>
@@ -1401,11 +1404,11 @@
           on the platform. It's free to get started.
         </p>
         <div class="cta-actions">
-          <a href="{% url 'signup' %}" class="btn-primary">
+          <a href="{% url 'signup_page' %}" class="btn-primary">
             Create Free Account
             <span class="btn-arrow">→</span>
           </a>
-          <a href="{% url 'signin' %}" class="btn-secondary">
+          <a href="{% url 'signin_page' %}" class="btn-secondary">
             Sign In
             <span class="btn-arrow">→</span>
           </a>
@@ -1434,17 +1437,17 @@
           <li><a href="#features">Features</a></li>
           <li><a href="#how-it-works">How It Works</a></li>
           <li><a href="#categories">Categories</a></li>
-          <li><a href="{% url 'signin' %}">Sign In</a></li>
+          <li><a href="{% url 'signin_page' %}">Sign In</a></li>
         </ul>
       </div>
 
       <div class="footer-links-col">
         <h4>For Sellers</h4>
         <ul>
-          <li><a href="{% url 'signup' %}">Start Selling</a></li>
-          <li><a href="#">Inventory Tools</a></li>
-          <li><a href="#">Seller Dashboard</a></li>
-          <li><a href="#">Pricing</a></li>
+          <li><a href="{% url 'signup_page' %}">Start Selling</a></li>
+          <li><a href="{% url 'inventory' %}">Inventory Tools</a></li>
+          <li><a href="{% url 'items' %}">Item List</a></li>
+          <li><a href="{% url 'add_address' %}">Add Address</a></li>
         </ul>
       </div>
 

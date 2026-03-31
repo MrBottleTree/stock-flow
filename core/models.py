@@ -5,6 +5,7 @@ class Buyer(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
+    password = models.CharField(max_length=128, blank=True, default="")
 
     def __str__(self):
         return self.name
@@ -40,6 +41,7 @@ class Seller(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
+    password = models.CharField(max_length=128, blank=True, default="")
 
     def __str__(self):
         return self.name
@@ -53,6 +55,7 @@ class Product(models.Model):
     )
     name = models.CharField(max_length=255)
     description = models.TextField()
+    image_url = models.URLField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     sku = models.CharField(max_length=100, unique=True)
 
@@ -61,10 +64,10 @@ class Product(models.Model):
 
 
 class Inventory(models.Model):
-    product = models.OneToOneField(
+    product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name="inventory"
+        related_name="inventories"
     )
     quantity = models.IntegerField()
     warehouse_location = models.ForeignKey(
