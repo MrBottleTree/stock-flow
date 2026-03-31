@@ -14,7 +14,10 @@ urlpatterns = [
     # Abhi this is just dummy in the views.py, change it when needed
     path('products/', views.products, name='products'),
     path('items/', views.items, name='items'),
+    path('items/<int:product_id>/', views.item_detail, name='item_detail'),
+    path('items/sold-out/', views.sold_out_items, name='sold_out_items'),
     path('inventory/', views.inventory, name='inventory'),
+    path('inventory/edit/<int:product_id>/', views.inventory, name='edit_inventory'),
     path('add-address/', views.add_address, name='add_address'),
 
 
@@ -26,4 +29,7 @@ path('profile/delete-account/',               views.delete_account,      name='d
 path('orders/<int:order_id>/delete/',         views.delete_order,        name='delete_order'),
 path('addresses/<int:address_id>/delete/',    views.delete_address,      name='delete_address'),
 path('addresses/<int:address_id>/default/',   views.set_default_address, name='set_default_address'),
+
+    path('cart/',     views.cart,     name='cart'),
+    path('checkout/', views.checkout, name='checkout'),
 ]

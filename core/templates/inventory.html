@@ -381,91 +381,125 @@
     </a>
     <nav class="nav-actions">
       <a class="nav-link" href="{% url 'items' %}">Item List</a>
-      <a class="nav-link primary" href="{% url 'inventory' %}">Inventory</a>
+      <a class="nav-link primary" href="{% url 'inventory' %}">My Inventory</a>
+      <a class="nav-link" href="{% url 'add_address' %}">Add Address</a>
       <a class="nav-link" href="{% url 'signout_page' %}">Sign Out</a>
     </nav>
   </header>
 
   <main class="inventory-shell">
     <section class="inventory-layout">
-      <aside class="inventory-info">
-        <span class="inventory-kicker">Seller Workspace</span>
-        <p class="inventory-kicker" style="margin-top: 4px; color: var(--cream-dim); letter-spacing: 0.08em;">Seller Item Creation</p>
-        <h1 class="inventory-title">Create Products and Stock Them Fast</h1>
-        <p class="inventory-copy">Use this panel to publish a new product and register its warehouse quantity in one flow, with the same premium StockFlow styling as the main experience.</p>
-        <div class="signed-in-info">Signed in as <strong>{{ seller_name }}</strong></div>
-      </aside>
+        <aside class="inventory-info">
+          <span class="inventory-kicker">Seller Workspace</span>
+          <p class="inventory-kicker" style="margin-top: 4px; color: var(--cream-dim); letter-spacing: 0.08em;">
+            {% if product %}
+              Update Your Product
+            {% else %}
+              Seller Item Creation
+            {% endif %}
+          </p>
+          <h1 class="inventory-title">
+            {% if product %}
+              Refine Your Catalog Details
+            {% else %}
+              Create Products and Stock Them Fast
+            {% endif %}
+          </h1>
+          <p class="inventory-copy">
+            {% if product %}
+              Modify the attributes and quantity of your item below. The changes will be applied across the marketplace instantly.
+            {% else %}
+              Use this panel to publish a new product and register its warehouse quantity in one flow, with the same premium StockFlow styling as the main experience.
+            {% endif %}
+          </p>
+          <div class="signed-in-info">Signed in as <strong>{{ seller_name }}</strong></div>
+        </aside>
 
-      <div class="inventory-card">
-        {% if messages %}
-          {% for message in messages %}
-            <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
-              {{ message }}
-            </div>
-          {% endfor %}
-        {% endif %}
+        <div class="inventory-card">
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert {% if message.tags %}{{ message.tags }}{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
 
-        <form method="post">
-          {% csrf_token %}
+          <form method="post">
+            {% csrf_token %}
 
-          <div class="section-divider">
-            <h2>Item Details</h2>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group full">
-              <label for="name">Item Name *</label>
-              <input id="name" name="name" type="text" placeholder="e.g., Wireless Mouse" required />
-            </div>
-
-            <div class="form-group full">
-              <label for="description">Description *</label>
-              <textarea id="description" name="description" placeholder="Describe your product..." required></textarea>
-            </div>
-
-            <div class="form-group full">
-              <label for="image_url">Image URL</label>
-              <input id="image_url" name="image_url" type="url" placeholder="https://example.com/image.jpg" />
-            </div>
-
-            <div class="form-group">
-              <label for="sku">SKU *</label>
-              <input id="sku" name="sku" type="text" placeholder="e.g., WM-2024-001" required />
+            <div class="section-divider">
+              <h2>Item Details</h2>
             </div>
 
-            <div class="form-group">
-              <label for="price">Price (USD) *</label>
-              <input id="price" name="price" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+            <div class="form-grid">
+              <div class="form-group full">
+                <label for="name">Item Name *</label>
+                <input id="name" name="name" type="text" placeholder="e.g., Wireless Mouse" value="{{ product.name|default:'' }}" required />
+              </div>
+
+              <div class="form-group full">
+                <label for="description">Description *</label>
+                <textarea id="description" name="description" placeholder="Describe your product..." required>{{ product.description|default:'' }}</textarea>
+              </div>
+
+              <div class="form-group full">
+                <label for="image_url">Image URL</label>
+                <input id="image_url" name="image_url" type="url" placeholder="https://example.com/image.jpg" value="{{ product.image_url|default:'' }}" />
+              </div>
+
+              <div class="form-group">
+                <label for="sku">SKU *</label>
+                <input id="sku" name="sku" type="text" placeholder="e.g., WM-2024-001" value="{{ product.sku|default:'' }}" required />
+              </div>
+
+              <div class="form-group">
+                <label for="price">Price (USD) *</label>
+                <input id="price" name="price" type="number" min="0.01" step="0.01" placeholder="0.00" value="{{ product.price|default:'' }}" required />
+              </div>
             </div>
-          </div>
 
-          <div class="section-divider">
-            <h2>Inventory Details</h2>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="quantity">Quantity *</label>
-              <input id="quantity" name="quantity" type="number" min="0" step="1" placeholder="0" required />
+            <div class="section-divider">
+              <h2>Inventory Details</h2>
             </div>
 
-            <div class="form-group">
-              <label for="warehouse_location">Warehouse Location *</label>
-              <select id="warehouse_location" name="warehouse_location" required>
-                <option value="">Select a warehouse</option>
-                {% for location in warehouse_locations %}
-                  <option value="{{ location }}">{{ location }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="quantity">Quantity *</label>
+                <input id="quantity" name="quantity" type="number" min="0" step="1" placeholder="0" value="{{ inventory_data.quantity|default:'' }}" required />
+              </div>
 
-          <div class="button-group">
-            <button type="submit" class="btn-primary">Create Item</button>
-            <a href="{% url 'home' %}" class="btn-secondary">Cancel</a>
-          </div>
-        </form>
-      </div>
+              <div class="form-group">
+                <label for="warehouse_location">Warehouse Location *</label>
+                {% if warehouse_locations %}
+                  <select id="warehouse_location" name="warehouse_location" required>
+                    <option value="">Select a warehouse</option>
+                    {% for addr in warehouse_locations %}
+                      <option value="{{ addr.id }}" {% if inventory_data.warehouse_location_id == addr.id %}selected{% endif %}>{{ addr.line1 }}, {{ addr.city }}</option>
+                    {% endfor %}
+                  </select>
+                {% else %}
+                  <select id="warehouse_location" name="warehouse_location" required disabled>
+                    <option value="">No addresses found</option>
+                  </select>
+                  <p style="font-size: 12px; color: var(--cream-dim); margin-top: 6px;">
+                    You need to <a href="{% url 'add_address' %}" style="color: var(--copper-lt); text-decoration: none; font-weight: 500;">add a warehouse address</a> first.
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button type="submit" class="btn-primary">
+                {% if product %}
+                  Update Item
+                {% else %}
+                  Create Item
+                {% endif %}
+              </button>
+              <a href="{% url 'items' %}" class="btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
     </section>
   </main>
 </body>

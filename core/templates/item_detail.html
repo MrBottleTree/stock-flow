@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ product.name }} — StockFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:      #1a2e1f;
+      --forest-mid:  #243328;
+      --forest-dk:   #0e1a10;
+      --copper:      #c87941;
+      --copper-lt:   #e09060;
+      --cream:       #f5f0e8;
+      --cream-dim:   #d9d0bc;
+      --ink:         #0e1a10;
+      --glass:       rgba(255,255,255,0.05);
+      --glass-md:    rgba(255,255,255,0.08);
+      --border:      rgba(200,121,65,0.25);
+      --border-lt:   rgba(200,121,65,0.12);
+      --success:     #b9f3cc;
+      --warning:     #ffd590;
+      --danger:      #ffb0a1;
+    }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: linear-gradient(160deg, var(--forest) 0%, var(--forest-mid) 100%);
+      color: var(--cream);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 38px 18px 56px;
+    }
+
+    /* ── BREADCRUMB ──────────────────────────────── */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+      font-size: 13px;
+    }
+
+    .breadcrumb a {
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .breadcrumb a:hover { color: var(--copper-lt); }
+
+    .breadcrumb .sep { color: var(--cream-dim); opacity: 0.5; }
+
+    .breadcrumb .current {
+      color: var(--copper);
+      font-weight: 500;
+    }
+
+    /* ── MESSAGES ────────────────────────────────── */
+    .messages {
+      list-style: none;
+      margin-bottom: 20px;
+    }
+
+    .messages li {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      border: 1px solid;
+    }
+
+    .messages .success {
+      color: var(--success);
+      border-color: rgba(185,243,204,0.3);
+      background: rgba(42,106,68,0.2);
+    }
+
+    .messages .error {
+      color: var(--danger);
+      border-color: rgba(255,176,161,0.3);
+      background: rgba(134,46,36,0.2);
+    }
+
+    .messages .warning {
+      color: var(--warning);
+      border-color: rgba(255,213,144,0.3);
+      background: rgba(121,88,32,0.2);
+    }
+
+    .messages .info {
+      color: var(--cream);
+      border-color: var(--border-lt);
+      background: var(--glass);
+    }
+
+    /* ── PRODUCT LAYOUT ─────────────────────────── */
+    .product-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+
+    /* ── IMAGE PANEL ─────────────────────────────── */
+    .image-panel {
+      background: linear-gradient(145deg, var(--glass-md), var(--glass));
+      border: 1px solid var(--border);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      overflow: hidden;
+    }
+
+    .image-panel img {
+      max-width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+    }
+
+    .image-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: var(--cream-dim);
+    }
+
+    .image-placeholder .icon {
+      font-size: 64px;
+      opacity: 0.3;
+    }
+
+    .image-placeholder p {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    /* ── DETAILS PANEL ──────────────────────────── */
+    .details-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .eyebrow {
+      color: var(--copper);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      display: block;
+    }
+
+    .product-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.05;
+      color: var(--cream);
+    }
+
+    .product-sku {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+      margin-top: 4px;
+    }
+
+    .product-description {
+      color: var(--cream-dim);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    /* ── PRICE & STOCK ROW ──────────────────────── */
+    .price-stock-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .price {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 42px;
+      font-weight: 600;
+      color: var(--copper-lt);
+      line-height: 1;
+    }
+
+    .price .currency {
+      font-size: 24px;
+      font-weight: 400;
+      vertical-align: super;
+      margin-right: 2px;
+    }
+
+    .badge {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border: 1px solid;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .badge.in {
+      color: var(--success);
+      border-color: rgba(185,243,204,0.4);
+      background: rgba(42,106,68,0.3);
+    }
+
+    .badge.low {
+      color: var(--warning);
+      border-color: rgba(255,213,144,0.45);
+      background: rgba(121,88,32,0.3);
+    }
+
+    .badge.out {
+      color: var(--danger);
+      border-color: rgba(255,176,161,0.45);
+      background: rgba(134,46,36,0.3);
+    }
+
+    /* ── DETAIL GRID ────────────────────────────── */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .detail-box {
+      border: 1px solid var(--border-lt);
+      background: rgba(14,26,16,0.35);
+      padding: 12px;
+    }
+
+    .detail-label {
+      color: var(--cream-dim);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      color: var(--cream);
+      font-size: 15px;
+      font-weight: 500;
+      overflow-wrap: anywhere;
+    }
+
+    /* ── ADD TO CART ─────────────────────────────── */
+    .cart-section {
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, var(--glass-md), var(--glass));
+      padding: 20px;
+    }
+
+    .cart-section h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      margin-bottom: 14px;
+      color: var(--cream);
+    }
+
+    .cart-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cream-dim);
+    }
+
+    .form-group input {
+      background: rgba(14,26,16,0.5);
+      border: 1px solid var(--border);
+      color: var(--cream);
+      padding: 10px 14px;
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      width: 110px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--copper);
+    }
+
+    .form-group input::placeholder {
+      color: var(--cream-dim);
+      opacity: 0.5;
+    }
+
+    .btn {
+      text-decoration: none;
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      padding: 12px 20px;
+      border: 1px solid rgba(245,240,232,0.22);
+      color: var(--cream-dim);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      color: var(--cream);
+      border-color: rgba(245,240,232,0.45);
+    }
+
+    .btn.primary {
+      background: var(--copper);
+      color: var(--ink);
+      border-color: var(--copper);
+      font-weight: 600;
+    }
+
+    .btn.primary:hover {
+      background: var(--copper-lt);
+      border-color: var(--copper-lt);
+      color: var(--ink);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary:disabled,
+    .btn.primary[disabled] {
+      background: rgba(200,121,65,0.3);
+      color: var(--cream-dim);
+      border-color: rgba(200,121,65,0.15);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .stock-note {
+      font-size: 13px;
+      color: var(--cream-dim);
+      margin-top: 8px;
+    }
+
+    .stock-note strong {
+      color: var(--copper);
+    }
+
+    .login-prompt {
+      color: var(--cream-dim);
+      font-size: 14px;
+    }
+
+    .login-prompt a {
+      color: var(--copper-lt);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .login-prompt a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── WAREHOUSE SECTION ──────────────────────── */
+    .warehouse-section {
+      margin-top: 32px;
+    }
+
+    .section-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      margin-bottom: 16px;
+      color: var(--cream);
+    }
+
+    .warehouse-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .warehouse-card {
+      background: linear-gradient(145deg, var(--glass-md), var(--glass));
+      border: 1px solid var(--border-lt);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .warehouse-card .wh-location {
+      font-weight: 500;
+      color: var(--copper);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .warehouse-card .wh-qty {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--cream);
+      line-height: 1;
+    }
+
+    .warehouse-card .wh-label {
+      font-size: 11px;
+      color: var(--cream-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .warehouse-card .wh-updated {
+      font-size: 12px;
+      color: var(--cream-dim);
+      opacity: 0.7;
+    }
+
+    .no-warehouse {
+      color: var(--cream-dim);
+      font-size: 14px;
+      padding: 16px;
+      border: 1px dashed var(--border);
+      background: rgba(14,26,16,0.35);
+    }
+
+    /* ── SELLER INFO SECTION ────────────────────── */
+    .seller-section {
+      margin-top: 32px;
+    }
+
+    .seller-card {
+      background: linear-gradient(145deg, var(--glass-md), var(--glass));
+      border: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .seller-avatar {
+      width: 56px;
+      height: 56px;
+      background: var(--copper);
+      color: var(--ink);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .seller-info { flex: 1; }
+
+    .seller-name {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--cream);
+      margin-bottom: 2px;
+    }
+
+    .seller-email {
+      font-size: 13px;
+      color: var(--cream-dim);
+    }
+
+    .seller-phone {
+      font-size: 13px;
+      color: var(--cream-dim);
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────── */
+    @media (max-width: 800px) {
+      .product-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .image-panel {
+        min-height: 260px;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .form-group input {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb" id="breadcrumb">
+      <a href="{% url 'home' %}">Home</a>
+      <span class="sep">›</span>
+      <a href="{% url 'items' %}">Items</a>
+      <span class="sep">›</span>
+      <span class="current">{{ product.name }}</span>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <!-- Product Layout -->
+    <section class="product-layout" id="product-detail">
+
+      <!-- Image Panel -->
+      <div class="image-panel" id="product-image">
+        {% if product.image_url %}
+          <img src="{{ product.image_url }}" alt="{{ product.name }}" />
+        {% else %}
+          <div class="image-placeholder">
+            <span class="icon">📦</span>
+            <p>No image available</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Details Panel -->
+      <div class="details-panel">
+        <div>
+          <span class="eyebrow">Product Details</span>
+          <h1 class="product-title" id="product-name">{{ product.name }}</h1>
+          <p class="product-sku" id="product-sku">SKU {{ product.sku }}</p>
+        </div>
+
+        <p class="product-description" id="product-description">{{ product.description }}</p>
+
+        <!-- Price & Stock -->
+        <div class="price-stock-row">
+          <span class="price" id="product-price">
+            <span class="currency">$</span>{{ product.price }}
+          </span>
+          <span class="badge {{ stock_status_class }}" id="stock-badge">{{ stock_status }}</span>
+        </div>
+
+        <!-- Detail Boxes -->
+        <div class="detail-grid" id="product-meta">
+          <div class="detail-box">
+            <p class="detail-label">Total Stock</p>
+            <p class="detail-value" id="total-stock">{{ total_quantity }} units</p>
+          </div>
+          <div class="detail-box">
+            <p class="detail-label">Warehouses</p>
+            <p class="detail-value" id="warehouse-count">{{ warehouse_count }} location{{ warehouse_count|pluralize }}</p>
+          </div>
+          <div class="detail-box">
+            <p class="detail-label">Seller</p>
+            <p class="detail-value">{{ product.seller.name }}</p>
+          </div>
+          <div class="detail-box">
+            <p class="detail-label">Seller Contact</p>
+            <p class="detail-value">{{ product.seller.email }}</p>
+          </div>
+        </div>
+
+        <!-- Add to Cart -->
+        <div class="cart-section" id="cart-section">
+          {% if user_type == 'buyer' %}
+            {% if total_quantity > 0 %}
+              <h3>Add to Cart</h3>
+              <form method="POST" action="{% url 'item_detail' product.id %}" class="cart-form" id="add-to-cart-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_to_cart" />
+                <div class="form-group">
+                  <label for="quantity">Quantity</label>
+                  <input type="number" name="quantity" id="quantity" min="1" max="{{ total_quantity }}" value="1" required />
+                </div>
+                <button type="submit" class="btn primary" id="add-to-cart-btn">
+                  Add to Cart
+                  <span>→</span>
+                </button>
+              </form>
+              <p class="stock-note">
+                <strong>{{ total_quantity }}</strong> units available across {{ warehouse_count }} warehouse{{ warehouse_count|pluralize }}
+              </p>
+            {% else %}
+              <h3>Out of Stock</h3>
+              <p class="stock-note">This item is currently unavailable. Please check back later.</p>
+            {% endif %}
+          {% elif user_type == 'seller' %}
+            <h3>Your Product</h3>
+            <p class="stock-note">You are viewing this product as a seller. Buyers can add it to their cart.</p>
+            <a href="{% url 'inventory' %}" class="btn primary" style="margin-top:10px; display:inline-flex;">
+              Manage Inventory
+              <span>→</span>
+            </a>
+          {% else %}
+            <h3>Want to purchase?</h3>
+            <p class="login-prompt">
+              <a href="{% url 'signin_page' %}">Sign in</a> or
+              <a href="{% url 'signup_page' %}">create an account</a>
+              to add items to your cart.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Warehouse Details -->
+    <section class="warehouse-section" id="warehouse-section">
+      <h2 class="section-heading">Warehouse Availability</h2>
+      {% if inventories %}
+        <div class="warehouse-grid">
+          {% for inv in inventories %}
+            <article class="warehouse-card">
+              <span class="wh-location">
+                {% if inv.warehouse_location %}
+                  {{ inv.warehouse_location }}
+                {% else %}
+                  Unassigned
+                {% endif %}
+              </span>
+              <span class="wh-qty">{{ inv.quantity }}</span>
+              <span class="wh-label">units in stock</span>
+              <span class="wh-updated">Updated {{ inv.updated_at|timesince }} ago</span>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="no-warehouse">No warehouse inventory records found for this product.</p>
+      {% endif %}
+    </section>
+
+    <!-- Seller Info -->
+    <section class="seller-section" id="seller-section">
+      <h2 class="section-heading">Sold By</h2>
+      <div class="seller-card">
+        <div class="seller-avatar">{{ product.seller.name|first }}</div>
+        <div class="seller-info">
+          <p class="seller-name">{{ product.seller.name }}</p>
+          <p class="seller-email">{{ product.seller.email }}</p>
+          <p class="seller-phone">{{ product.seller.phone }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Back Button -->
+    <div style="margin-top: 32px;">
+      <a href="{% url 'items' %}" class="btn" id="back-to-items">
+        ← Back to Items
+      </a>
+      <a href="{% url 'home' %}" class="btn" id="back-to-home" style="margin-left:8px;">
+        Home
+      </a>
+    </div>
+
+  </main>
+</body>
+</html>
