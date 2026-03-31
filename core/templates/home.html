@@ -1008,6 +1008,7 @@
           <li><a href="{% url 'inventory' %}">My Inventory</a></li>
           <li><a href="{% url 'add_address' %}">Add Address</a></li>
         {% elif user_type == 'buyer' %}
+          <li><a href="{% url 'cart' %}">🛒 My Cart</a></li>
           <li><a href="{% url 'order_history' %}">My Orders</a></li>
           <li><a href="{% url 'add_address' %}">Add Address</a></li>
         {% endif %}
@@ -1081,9 +1082,9 @@
               Browse Item List
               <span class="btn-arrow">→</span>
             </a>
-            <a href="#features" class="btn-secondary">
-              Explore Platform
-              <span class="btn-arrow">↓</span>
+            <a href="{% url 'cart' %}" class="btn-secondary">
+              🛒 My Cart
+              <span class="btn-arrow">→</span>
             </a>
           {% elif is_authenticated and user_type == 'seller' %}
             <a href="{% url 'inventory' %}" class="btn-primary">
@@ -1381,8 +1382,8 @@
               Browse Item List
               <span class="btn-arrow">→</span>
             </a>
-            <a href="{% url 'order_history' %}" class="btn-secondary">
-              My Orders
+            <a href="{% url 'cart' %}" class="btn-secondary">
+              🛒 My Cart
               <span class="btn-arrow">→</span>
             </a>
           </div>

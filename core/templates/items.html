@@ -317,7 +317,8 @@
           <a class="btn primary" href="{% url 'inventory' %}">My Inventory</a>
           <a class="btn" href="{% url 'add_address' %}">Add Address</a>
         {% elif user_type == 'buyer' %}
-          <a class="btn primary" href="{% url 'order_history' %}">My Orders</a>
+          <a class="btn primary" href="{% url 'cart' %}">🛒 My Cart</a>
+          <a class="btn" href="{% url 'order_history' %}">My Orders</a>
           <a class="btn" href="{% url 'add_address' %}">Add Address</a>
         {% endif %}
         <a class="btn" href="{% url 'home' %}">Home</a>
