@@ -674,9 +674,12 @@
       );
     }
 
-    // Check URL param for deep-linking: ?mode=signup
+    // Check URL param for deep-linking: ?mode=signup, or if we are physically on the signup endpoint
     const urlMode = new URLSearchParams(location.search).get('mode');
-    if (urlMode === 'signup') setMode('signup');
+    const isSignupEndpoint = window.location.pathname.includes('signup');
+    if (urlMode === 'signup' || isSignupEndpoint) {
+      setMode('signup');
+    }
   </script>
 </body>
 </html>
