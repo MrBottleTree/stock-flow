@@ -7,7 +7,8 @@ from django.contrib import messages
 from core.models import *
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum
+from django.db.models import Sum, F
+from django.db import transaction
 
 def home(request):
     context = {
@@ -513,6 +514,151 @@ def order_history(request):
     return render(request, 'order_history.html', context)
 
 
+def cart(request):
+    """Show the buyer's cart with an address selector."""
+    if not request.session.get('user_id') or request.session.get('user_type') != 'buyer':
+        messages.error(request, 'You must be signed in as a buyer to view your cart.')
+        return redirect('signin')
+
+    buyer = Buyer.objects.get(id=request.session['user_id'])
+
+    try:
+        buyer_cart = (
+            Cart.objects
+            .prefetch_related('cart_items__product__inventories')
+            .get(buyer=buyer)
+        )
+        cart_items = buyer_cart.cart_items.all()
+    except Cart.DoesNotExist:
+        buyer_cart = None
+        cart_items = []
+
+    # Annotate each item with its line total for display
+    annotated_items = []
+    subtotal = 0
+    for item in cart_items:
+        line_total = item.product.price * item.quantity
+        subtotal += line_total
+        try:
+            stock = sum(max(inv.quantity, 0) for inv in item.product.inventories.all())
+        except Exception:
+            stock = 0
+        annotated_items.append({
+            'product': item.product,
+            'quantity': item.quantity,
+            'line_total': line_total,
+            'stock': stock,
+            'insufficient': stock < item.quantity,
+        })
+
+    addresses = buyer.addresses.all()
+
+    context = {
+        'is_authenticated': True,
+        'user_type': 'buyer',
+        'user_name': request.session.get('user_name', ''),
+        'buyer': buyer,
+        'cart': buyer_cart,
+        'cart_items': annotated_items,
+        'addresses': addresses,
+        'subtotal': subtotal,
+    }
+    return render(request, 'cart.html', context)
+
+
+def checkout(request):
+    """POST-only: place an order from the buyer's cart."""
+    if request.method != 'POST':
+        return redirect('cart')
+
+    if not request.session.get('user_id') or request.session.get('user_type') != 'buyer':
+        messages.error(request, 'You must be signed in as a buyer to checkout.')
+        return redirect('signin')
+
+    buyer = Buyer.objects.get(id=request.session['user_id'])
+
+    # Validate address
+    address_id = request.POST.get('address_id')
+    try:
+        address = Address.objects.get(id=address_id, buyer=buyer)
+    except Address.DoesNotExist:
+        messages.error(request, 'Please select a valid delivery address.')
+        return redirect('cart')
+
+    # Fetch cart
+    try:
+        buyer_cart = Cart.objects.prefetch_related('cart_items__product').get(buyer=buyer)
+    except Cart.DoesNotExist:
+        messages.error(request, 'Your cart is empty.')
+        return redirect('cart')
+
+    cart_items = list(buyer_cart.cart_items.select_related('product').all())
+    if not cart_items:
+        messages.error(request, 'Your cart is empty.')
+        return redirect('cart')
+
+    try:
+        with transaction.atomic():
+            # Lock the relevant inventory rows to prevent race conditions
+            product_ids = [ci.product_id for ci in cart_items]
+            inventory_qs = (
+                Inventory.objects
+                .select_for_update()
+                .filter(product_id__in=product_ids)
+            )
+            inv_map = {inv.product_id: inv for inv in inventory_qs}
+
+            # Validate stock for every item before touching anything
+            for ci in cart_items:
+                inv = inv_map.get(ci.product_id)
+                if inv is None or inv.quantity < ci.quantity:
+                    product_name = ci.product.name
+                    available = inv.quantity if inv else 0
+                    raise ValueError(
+                        f"Insufficient stock for '{product_name}' "
+                        f"(requested {ci.quantity}, available {available})."
+                    )
+
+            # Compute total
+            total_amount = sum(ci.product.price * ci.quantity for ci in cart_items)
+
+            # Create order
+            order = Order.objects.create(
+                buyer=buyer,
+                address=address,
+                total_amount=total_amount,
+                status='placed',
+            )
+
+            # Create order items & decrement inventory atomically
+            for ci in cart_items:
+                line_total = ci.product.price * ci.quantity
+                OrderItem.objects.create(
+                    order=order,
+                    product=ci.product,
+                    quantity=ci.quantity,
+                    unit_price=ci.product.price,
+                    line_total=line_total,
+                )
+                # Atomic DB-level decrement — never read-modify-write in Python
+                Inventory.objects.filter(product=ci.product).update(
+                    quantity=F('quantity') - ci.quantity
+                )
+
+            # Clear the cart
+            buyer_cart.cart_items.all().delete()
+
+    except ValueError as e:
+        messages.error(request, str(e))
+        return redirect('cart')
+    except Exception:
+        messages.error(request, 'Something went wrong. Please try again.')
+        return redirect('cart')
+
+    messages.success(request, f'Order #{order.id} placed successfully!')
+    return redirect('order_history')
+
+
 def item_detail(request, product_id):
     product = Product.objects.select_related('seller').prefetch_related('inventories').filter(id=product_id).first()
 
@@ -607,3 +753,4 @@ def item_detail(request, product_id):
         'user_name': user.name if user else '',
     }
     return render(request, 'item_detail.html', context)
+
