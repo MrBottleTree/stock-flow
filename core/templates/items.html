@@ -385,6 +385,12 @@
                 No warehouse registered
               {% endif %}
             </p>
+
+            {% if user_type == 'seller' and item.seller_id == user_id %}
+              <div style="margin-top: 14px; display: flex; justify-content: flex-end;">
+                <a href="{% url 'edit_inventory' item.id %}" class="btn" style="border-color: var(--copper); color: var(--copper); font-weight: 600;" onclick="event.stopPropagation();">Edit Item</a>
+              </div>
+            {% endif %}
           </a>
         {% endfor %}
       </section>
