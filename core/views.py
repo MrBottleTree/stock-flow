@@ -297,6 +297,9 @@ def signup(request):
     if not all([name, email, phone, password, user_type]):
         return JsonResponse({'success': False, 'message': 'name, email, phone, password and user_type are required.'}, status=400)
 
+    if len(password) < 8:
+        return JsonResponse({'success': False, 'message': 'New password must be at least 8 characters.'}, status=400)
+
     user_model = _get_user_model(user_type)
     if not user_model:
         return JsonResponse({'success': False, 'message': 'user_type must be either buyer or seller.'}, status=400)
@@ -389,6 +392,8 @@ def signup_page(request):
 
         if not all([name, email, phone, password]):
             messages.error(request, 'All fields are required.')
+        elif len(password) < 8:
+            messages.error(request, 'New password must be at least 8 characters.')
         elif password != confirm:
             messages.error(request, 'Passwords do not match.')
         elif user_type not in ('buyer', 'seller'):
