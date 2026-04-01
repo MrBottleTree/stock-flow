@@ -474,7 +474,7 @@
                   <select id="warehouse_location" name="warehouse_location" required>
                     <option value="">Select a warehouse</option>
                     {% for addr in warehouse_locations %}
-                      <option value="{{ addr.id }}" {% if inventory_data.warehouse_location_id == addr.id %}selected{% endif %}>{{ addr.line1 }}, {{ addr.city }}</option>
+                      <option value="{{ addr.id }}" {% if inventory_data.warehouse_location_id == addr.id %}selected{% elif not inventory_data and addr.is_default %}selected{% endif %}>{{ addr.line1 }}, {{ addr.city }}</option>
                     {% endfor %}
                   </select>
                 {% else %}
