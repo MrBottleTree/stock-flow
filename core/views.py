@@ -893,14 +893,28 @@ def set_default_address(request, address_id):
     if 'user_id' not in request.session:
         return redirect('signin_page')
 
+    user_type = request.session.get('user_type')
+    user_id = request.session['user_id']
+
     if request.method == 'POST':
-        buyer = Buyer.objects.get(id=request.session['user_id'])
-        Address.objects.filter(buyer=buyer).update(is_default=False)
-        address = Address.objects.filter(id=address_id, buyer=buyer).first()
-        if address:
-            address.is_default = True
-            address.save()
+        if user_type == 'buyer':
+            buyer = Buyer.objects.get(id=user_id)
+            Address.objects.filter(buyer=buyer).update(is_default=False)
+            addr = Address.objects.filter(id=address_id, buyer=buyer).first()
+        elif user_type == 'seller':
+            seller = Seller.objects.get(id=user_id)
+            Address.objects.filter(seller=seller).update(is_default=False)
+            addr = Address.objects.filter(id=address_id, seller=seller).first()
+        else:
+            addr = None
+
+        if addr:
+            addr.is_default = True
+            addr.save()
             messages.success(request, 'Default address updated.')
+            
+    if user_type == 'seller':
+        return redirect('inventory')
     return redirect('profile')
 
 
