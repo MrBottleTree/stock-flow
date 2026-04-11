@@ -251,6 +251,17 @@ class SellerInventoryPageTests(TestCase):
 			password='x',
 		)
 
+		# Create an address for the seller to use as warehouse location
+		from core.models import Address
+		address = Address.objects.create(
+			seller=seller,
+			line1='North Hub',
+			city='Mumbai',
+			state='Maharashtra',
+			postal_code='400001',
+			country='India',
+		)
+
 		session = self.client.session
 		session['user_id'] = seller.id
 		session['user_type'] = 'seller'
@@ -266,7 +277,7 @@ class SellerInventoryPageTests(TestCase):
 				'sku': 'WIDGET-PRO-001',
 				'price': '19.99',
 				'quantity': '25',
-				'warehouse_location': 'North Hub',
+				'warehouse_location': str(address.id),
 			},
 		)
 
@@ -274,4 +285,4 @@ class SellerInventoryPageTests(TestCase):
 		self.assertTrue(Product.objects.filter(sku='WIDGET-PRO-001').exists())
 		product = Product.objects.get(sku='WIDGET-PRO-001')
 		self.assertEqual(product.seller_id, seller.id)
-		self.assertTrue(Inventory.objects.filter(product=product, warehouse_location='North Hub').exists())
+		self.assertTrue(Inventory.objects.filter(product=product, warehouse_location=address).exists())
