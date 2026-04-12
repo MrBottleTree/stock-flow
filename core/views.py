@@ -16,6 +16,7 @@ def home(request):
         'is_authenticated': 'user_id' in request.session,
         'user_type': request.session.get('user_type', ''),
         'user_name': request.session.get('user_name', ''),
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'home.html', context)
 
@@ -122,6 +123,7 @@ def inventory(request, product_id=None):
             'quantity': existing_inventory.quantity if existing_inventory else '',
             'warehouse_location_id': existing_inventory.warehouse_location_id if existing_inventory and existing_inventory.warehouse_location else '',
         },
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'inventory.html', context)
 
@@ -264,6 +266,7 @@ def _render_items_page(request, filter_sold_out=False):
         'is_sold_out_tab': filter_sold_out,
         'page_title': 'Sold Out Items' if filter_sold_out else 'Marketplace Item List',
         'page_subtitle': f"Welcome {user.name} ({user_type}). Browse all products currently out of stock." if filter_sold_out else f"Welcome {user.name} ({user_type}). Browse item health, seller details, and warehouse coverage in one place.",
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'items.html', context)
 
@@ -487,6 +490,7 @@ def add_address(request):
     context = {
         'user_type': request.session.get('user_type', ''),
         'user_name': request.session.get('user_name', ''),
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'add_address.html', context)
 
@@ -514,6 +518,7 @@ def order_history(request):
         'buyer': buyer,
         'orders': orders,
         'total_spent': total_spent,
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'order_history.html', context)
 
@@ -566,12 +571,15 @@ def cart(request):
         'cart_items': annotated_items,
         'addresses': addresses,
         'subtotal': subtotal,
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'cart.html', context)
 
 
 def checkout(request):
-    """POST-only: place an order from the buyer's cart."""
+    """POST-only: place an order from the buyer's cart.
+    Orders start as 'Pending' — inventory is NOT deducted until all sellers approve.
+    """
     if request.method != 'POST':
         return redirect('cart')
 
@@ -591,33 +599,33 @@ def checkout(request):
 
     # Fetch cart
     try:
-        buyer_cart = Cart.objects.prefetch_related('cart_items__product').get(buyer=buyer)
+        buyer_cart = Cart.objects.prefetch_related('cart_items__product__seller').get(buyer=buyer)
     except Cart.DoesNotExist:
         messages.error(request, 'Your cart is empty.')
         return redirect('cart')
 
-    cart_items = list(buyer_cart.cart_items.select_related('product').all())
+    cart_items = list(buyer_cart.cart_items.select_related('product__seller').all())
     if not cart_items:
         messages.error(request, 'Your cart is empty.')
         return redirect('cart')
 
     try:
         with transaction.atomic():
-            # Lock the relevant inventory rows to prevent race conditions
+            # Validate stock availability (but do NOT deduct yet)
             product_ids = [ci.product_id for ci in cart_items]
             inventory_qs = (
                 Inventory.objects
-                .select_for_update()
                 .filter(product_id__in=product_ids)
             )
-            inv_map = {inv.product_id: inv for inv in inventory_qs}
+            # Build map: product_id → total stock across all warehouses
+            inv_totals = {}
+            for inv in inventory_qs:
+                inv_totals[inv.product_id] = inv_totals.get(inv.product_id, 0) + max(inv.quantity, 0)
 
-            # Validate stock for every item before touching anything
             for ci in cart_items:
-                inv = inv_map.get(ci.product_id)
-                if inv is None or inv.quantity < ci.quantity:
+                available = inv_totals.get(ci.product_id, 0)
+                if available < ci.quantity:
                     product_name = ci.product.name
-                    available = inv.quantity if inv else 0
                     raise ValueError(
                         f"Insufficient stock for '{product_name}' "
                         f"(requested {ci.quantity}, available {available})."
@@ -626,28 +634,63 @@ def checkout(request):
             # Compute total
             total_amount = sum(ci.product.price * ci.quantity for ci in cart_items)
 
-            # Create order
+            # Create order with Pending status
             order = Order.objects.create(
                 buyer=buyer,
                 address=address,
                 total_amount=total_amount,
-                status='placed',
+                status='Pending',
             )
 
-            # Create order items & decrement inventory atomically
+            # Create order items — all start as Pending
+            order_items_by_seller = {}
             for ci in cart_items:
                 line_total = ci.product.price * ci.quantity
-                OrderItem.objects.create(
+                oi = OrderItem.objects.create(
                     order=order,
                     product=ci.product,
                     quantity=ci.quantity,
                     unit_price=ci.product.price,
                     line_total=line_total,
+                    status='Pending',
                 )
-                # Atomic DB-level decrement — never read-modify-write in Python
-                Inventory.objects.filter(product=ci.product).update(
-                    quantity=F('quantity') - ci.quantity
+                seller = ci.product.seller
+                if seller.id not in order_items_by_seller:
+                    order_items_by_seller[seller.id] = {'seller': seller, 'items': []}
+                order_items_by_seller[seller.id]['items'].append(oi)
+
+            # ── Notification for the BUYER ──
+            seller_names = ', '.join(
+                data['seller'].name for data in order_items_by_seller.values()
+            )
+            Notification.objects.create(
+                buyer=buyer,
+                order=order,
+                notification_type='order_placed',
+                message=(
+                    f"Your order #{order.id} has been placed and is awaiting approval "
+                    f"from: {seller_names}. You will be notified once all sellers respond."
+                ),
+            )
+
+            # ── Notifications for each SELLER ──
+            for seller_id, data in order_items_by_seller.items():
+                seller = data['seller']
+                product_list = ', '.join(
+                    f"{oi.product.name} (×{oi.quantity})" for oi in data['items']
                 )
+                for oi in data['items']:
+                    Notification.objects.create(
+                        seller=seller,
+                        order=order,
+                        order_item=oi,
+                        notification_type='approval_request',
+                        message=(
+                            f"Buyer {buyer.name} placed order #{order.id} "
+                            f"including your product '{oi.product.name}' (×{oi.quantity}, "
+                            f"₹{oi.line_total}). Please approve or reject this item."
+                        ),
+                    )
 
             # Clear the cart
             buyer_cart.cart_items.all().delete()
@@ -659,7 +702,10 @@ def checkout(request):
         messages.error(request, 'Something went wrong. Please try again.')
         return redirect('cart')
 
-    messages.success(request, f'Order #{order.id} placed successfully!')
+    messages.success(
+        request,
+        f'Order #{order.id} placed! It is pending seller approval.'
+    )
     return redirect('order_history')
 
 
@@ -824,6 +870,7 @@ def item_detail(request, product_id):
         'stock_status_class': stock_status_class,
         'user_type': user_type or '',
         'user_name': user.name if user else '',
+        'unread_notification_count': _get_unread_notification_count(request),
     }
     return render(request, 'item_detail.html', context)
 
@@ -851,6 +898,7 @@ def profile(request):
         'user_name':   buyer.name,
         'user_email':  buyer.email,
         'user_type':   'buyer',
+        'unread_notification_count': _get_unread_notification_count(request),
     })
 
 
@@ -861,11 +909,13 @@ def delete_order(request, order_id):
     if request.method == 'POST':
         buyer = Buyer.objects.get(id=request.session['user_id'])
         order = Order.objects.filter(id=order_id, buyer=buyer).first()
-        if order:
+        if not order:
+            messages.error(request, 'Order not found.')
+        elif order.status == 'Pending':
+            messages.error(request, 'Cannot delete a pending order — wait for seller response, or it will be auto-resolved.')
+        else:
             order.delete()
             messages.success(request, f'Order #{order_id} removed from your history.')
-        else:
-            messages.error(request, 'Order not found.')
     return redirect('profile')
 
 
@@ -950,3 +1000,246 @@ def delete_account(request):
         messages.success(request, 'Your account has been deleted.')
         return redirect('home')
     return redirect('profile')
+
+
+# ──────────────────────────────────────────────────────────────
+# NOTIFICATION VIEWS
+# ──────────────────────────────────────────────────────────────
+
+def _get_unread_notification_count(request):
+    """Return the unread notification count for the current session user."""
+    user_id = request.session.get('user_id')
+    user_type = request.session.get('user_type', '')
+    if not user_id:
+        return 0
+    if user_type == 'buyer':
+        return Notification.objects.filter(buyer_id=user_id, is_read=False).count()
+    elif user_type == 'seller':
+        return Notification.objects.filter(seller_id=user_id, is_read=False).count()
+    return 0
+
+
+def notifications(request):
+    """Notifications page for both buyers and sellers."""
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        messages.error(request, 'Please sign in to view notifications.')
+        return redirect('signin_page')
+
+    if user_type == 'buyer':
+        notifs = Notification.objects.filter(buyer=user).select_related('order')
+    else:
+        notifs = Notification.objects.filter(seller=user).select_related('order', 'order_item', 'order_item__product')
+
+    unread_count = notifs.filter(is_read=False).count()
+    total_count = notifs.count()
+    read_count = total_count - unread_count
+
+    context = {
+        'user_name': user.name,
+        'user_type': user_type,
+        'notifications': notifs,
+        'unread_count': unread_count,
+        'total_count': total_count,
+        'read_count': read_count,
+    }
+    return render(request, 'notifications.html', context)
+
+
+def seller_approve_item(request, item_id):
+    """Seller approves an order item. If ALL items approved → order Confirmed + deduct inventory."""
+    if request.method != 'POST':
+        return redirect('notifications')
+
+    user, user_type = _get_valid_session_user(request)
+    if not user or user_type != 'seller':
+        messages.error(request, 'Only sellers can approve order items.')
+        return redirect('signin_page')
+
+    try:
+        order_item = OrderItem.objects.select_related('product', 'order').get(
+            id=item_id, product__seller=user
+        )
+    except OrderItem.DoesNotExist:
+        messages.error(request, 'Order item not found or you do not have permission.')
+        return redirect('notifications')
+
+    if order_item.status != 'Pending':
+        messages.error(request, f'This item has already been {order_item.status.lower()}.')
+        return redirect('notifications')
+
+    order = order_item.order
+
+    # Reject if order is already Rejected
+    if order.status == 'Rejected':
+        messages.error(request, 'This order has already been rejected.')
+        return redirect('notifications')
+
+    with transaction.atomic():
+        # Approve this item
+        order_item.status = 'Approved'
+        order_item.save()
+
+        # Mark the seller's approval-request notification as read
+        Notification.objects.filter(
+            seller=user, order_item=order_item, notification_type='approval_request'
+        ).update(is_read=True)
+
+        # Notify the buyer about this item's approval
+        Notification.objects.create(
+            buyer=order.buyer,
+            order=order,
+            order_item=order_item,
+            notification_type='item_approved',
+            message=(
+                f"Seller {user.name} has approved '{order_item.product.name}' "
+                f"(×{order_item.quantity}) in your order #{order.id}."
+            ),
+        )
+
+        # Check if ALL items in this order are now Approved
+        all_items = list(order.items.all())
+        all_approved = all(item.status == 'Approved' for item in all_items)
+
+        if all_approved:
+            order.status = 'Confirmed'
+            order.save()
+
+            # Deduct inventory NOW — atomically using F() expressions
+            for item in all_items:
+                Inventory.objects.filter(product=item.product).update(
+                    quantity=F('quantity') - item.quantity
+                )
+
+            # Notify buyer of full confirmation
+            Notification.objects.create(
+                buyer=order.buyer,
+                order=order,
+                notification_type='order_confirmed',
+                message=(
+                    f"Great news! All sellers have approved your order #{order.id}. "
+                    f"Your order is now confirmed and being processed. Total: ₹{order.total_amount}."
+                ),
+            )
+
+    messages.success(request, f'You approved "{order_item.product.name}" for order #{order.id}.')
+    return redirect('notifications')
+
+
+def seller_reject_item(request, item_id):
+    """Seller rejects an order item → entire order gets Rejected."""
+    if request.method != 'POST':
+        return redirect('notifications')
+
+    user, user_type = _get_valid_session_user(request)
+    if not user or user_type != 'seller':
+        messages.error(request, 'Only sellers can reject order items.')
+        return redirect('signin_page')
+
+    try:
+        order_item = OrderItem.objects.select_related('product', 'order__buyer').get(
+            id=item_id, product__seller=user
+        )
+    except OrderItem.DoesNotExist:
+        messages.error(request, 'Order item not found or you do not have permission.')
+        return redirect('notifications')
+
+    if order_item.status != 'Pending':
+        messages.error(request, f'This item has already been {order_item.status.lower()}.')
+        return redirect('notifications')
+
+    order = order_item.order
+
+    with transaction.atomic():
+        # Reject this particular item
+        order_item.status = 'Rejected'
+        order_item.save()
+
+        # Reject the ENTIRE order
+        order.status = 'Rejected'
+        order.save()
+
+        # Mark ALL remaining pending items in this order as Rejected
+        order.items.filter(status='Pending').update(status='Rejected')
+
+        # Mark the seller's approval-request notification as read
+        Notification.objects.filter(
+            seller=user, order_item=order_item, notification_type='approval_request'
+        ).update(is_read=True)
+
+        # Mark all other sellers' pending approval requests for this order as read
+        # since the order is now rejected
+        Notification.objects.filter(
+            order=order, notification_type='approval_request', is_read=False
+        ).update(is_read=True)
+
+        # Notify the buyer that the order was rejected
+        Notification.objects.create(
+            buyer=order.buyer,
+            order=order,
+            order_item=order_item,
+            notification_type='order_rejected',
+            message=(
+                f"Your order #{order.id} has been rejected because seller "
+                f"{user.name} declined the item '{order_item.product.name}'. "
+                f"The entire order has been cancelled. No inventory was deducted."
+            ),
+        )
+
+        # Notify other sellers that the order was cancelled (so they don't wait)
+        other_seller_notifs = Notification.objects.filter(
+            order=order,
+            notification_type='approval_request',
+        ).exclude(seller=user).values_list('seller_id', flat=True).distinct()
+
+        for other_seller_id in other_seller_notifs:
+            Notification.objects.create(
+                seller_id=other_seller_id,
+                order=order,
+                notification_type='order_rejected',
+                message=(
+                    f"Order #{order.id} has been cancelled because another seller "
+                    f"rejected an item. No further action is needed from you."
+                ),
+            )
+
+    messages.success(
+        request,
+        f'You rejected "{order_item.product.name}". Order #{order.id} has been cancelled.'
+    )
+    return redirect('notifications')
+
+
+def mark_notification_read(request, notification_id):
+    """Mark a single notification as read."""
+    if request.method != 'POST':
+        return redirect('notifications')
+
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        return redirect('signin_page')
+
+    if user_type == 'buyer':
+        Notification.objects.filter(id=notification_id, buyer=user).update(is_read=True)
+    elif user_type == 'seller':
+        Notification.objects.filter(id=notification_id, seller=user).update(is_read=True)
+
+    return redirect('notifications')
+
+
+def mark_all_notifications_read(request):
+    """Mark all notifications as read for the current user."""
+    if request.method != 'POST':
+        return redirect('notifications')
+
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        return redirect('signin_page')
+
+    if user_type == 'buyer':
+        Notification.objects.filter(buyer=user, is_read=False).update(is_read=True)
+    elif user_type == 'seller':
+        Notification.objects.filter(seller=user, is_read=False).update(is_read=True)
+
+    messages.success(request, 'All notifications marked as read.')
+    return redirect('notifications')

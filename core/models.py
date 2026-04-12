@@ -126,6 +126,11 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+    ]
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -138,6 +143,64 @@ class OrderItem(models.Model):
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     line_total = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
 
     class Meta:
         unique_together = ("order", "product")
+
+    def __str__(self):
+        return f"OrderItem #{self.id} — {self.product.name} (Order #{self.order_id})"
+
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('order_placed', 'Order Placed'),
+        ('approval_request', 'Approval Request'),
+        ('order_confirmed', 'Order Confirmed'),
+        ('order_rejected', 'Order Rejected'),
+        ('item_approved', 'Item Approved'),
+        ('item_rejected', 'Item Rejected'),
+    ]
+    buyer = models.ForeignKey(
+        Buyer,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        blank=True,
+        null=True,
+    )
+    seller = models.ForeignKey(
+        Seller,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        blank=True,
+        null=True,
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        blank=True,
+        null=True,
+    )
+    order_item = models.ForeignKey(
+        OrderItem,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        blank=True,
+        null=True,
+    )
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['buyer', 'is_read']),
+            models.Index(fields=['seller', 'is_read']),
+        ]
+
+    def __str__(self):
+        target = self.buyer or self.seller
+        return f"Notification for {target} — {self.notification_type}"
