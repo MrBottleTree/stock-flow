@@ -300,6 +300,9 @@ def signup(request):
     if not all([name, email, phone, password, user_type]):
         return JsonResponse({'success': False, 'message': 'name, email, phone, password and user_type are required.'}, status=400)
 
+    if len(password) < 8:
+        return JsonResponse({'success': False, 'message': 'New password must be at least 8 characters.'}, status=400)
+
     user_model = _get_user_model(user_type)
     if not user_model:
         return JsonResponse({'success': False, 'message': 'user_type must be either buyer or seller.'}, status=400)
@@ -392,6 +395,8 @@ def signup_page(request):
 
         if not all([name, email, phone, password]):
             messages.error(request, 'All fields are required.')
+        elif len(password) < 8:
+            messages.error(request, 'New password must be at least 8 characters.')
         elif password != confirm:
             messages.error(request, 'Passwords do not match.')
         elif user_type not in ('buyer', 'seller'):
@@ -938,14 +943,28 @@ def set_default_address(request, address_id):
     if 'user_id' not in request.session:
         return redirect('signin_page')
 
+    user_type = request.session.get('user_type')
+    user_id = request.session['user_id']
+
     if request.method == 'POST':
-        buyer = Buyer.objects.get(id=request.session['user_id'])
-        Address.objects.filter(buyer=buyer).update(is_default=False)
-        address = Address.objects.filter(id=address_id, buyer=buyer).first()
-        if address:
-            address.is_default = True
-            address.save()
+        if user_type == 'buyer':
+            buyer = Buyer.objects.get(id=user_id)
+            Address.objects.filter(buyer=buyer).update(is_default=False)
+            addr = Address.objects.filter(id=address_id, buyer=buyer).first()
+        elif user_type == 'seller':
+            seller = Seller.objects.get(id=user_id)
+            Address.objects.filter(seller=seller).update(is_default=False)
+            addr = Address.objects.filter(id=address_id, seller=seller).first()
+        else:
+            addr = None
+
+        if addr:
+            addr.is_default = True
+            addr.save()
             messages.success(request, 'Default address updated.')
+            
+    if user_type == 'seller':
+        return redirect('inventory')
     return redirect('profile')
 
 
