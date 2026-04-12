@@ -645,13 +645,14 @@
     <ul class="nav-links">
       <li><a href="{% url 'items' %}">Item List</a></li>
       {% if user_type == 'buyer' %}
-        <li><a href="{% url 'cart' %}" class="nav-cart">🛒 My Cart</a></li>
+        <li><a href="{% url 'cart' %}" class="nav-cart">My Cart</a></li>
         <li><a href="{% url 'order_history' %}">My Orders</a></li>
         <li><a href="{% url 'add_address' %}">Add Address</a></li>
       {% elif user_type == 'seller' %}
         <li><a href="{% url 'inventory' %}">My Inventory</a></li>
         <li><a href="{% url 'add_address' %}">Add Address</a></li>
       {% endif %}
+      <li><a href="{% url 'profile' %}">Profile</a></li>
       {% if user_type %}
         <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
       {% else %}
@@ -827,7 +828,7 @@
       </a>
       {% if user_type == 'buyer' %}
         <a href="{% url 'cart' %}" class="btn" style="border-color:rgba(200,121,65,0.4);color:var(--copper);">
-          🛒 My Cart
+          My Cart
         </a>
         <a href="{% url 'order_history' %}" class="btn">My Orders</a>
       {% elif user_type == 'seller' %}
