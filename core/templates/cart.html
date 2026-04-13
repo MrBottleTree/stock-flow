@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,30 +8,40 @@
   <meta name="description" content="Review your cart and place your order on StockFlow." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --forest:      #1a2e1f;
-      --forest-mid:  #243328;
-      --forest-lt:   #2e4035;
-      --forest-dk:   #0e1a10;
-      --copper:      #c87941;
-      --copper-lt:   #e09060;
-      --copper-glow: rgba(200,121,65,0.25);
-      --cream:       #f5f0e8;
-      --cream-dim:   #d9d0bc;
-      --ink:         #0e1a10;
-      --glass:       rgba(255,255,255,0.04);
-      --glass-md:    rgba(255,255,255,0.06);
-      --border:      rgba(200,121,65,0.22);
-      --border-lt:   rgba(200,121,65,0.10);
-      --radius:      2px;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html { scroll-behavior: smooth; }
+    :root {
+      --forest: #1a2e1f;
+      --forest-mid: #243328;
+      --forest-lt: #2e4035;
+      --forest-dk: #0e1a10;
+      --copper: #c87941;
+      --copper-lt: #e09060;
+      --copper-glow: rgba(200, 121, 65, 0.25);
+      --cream: #f5f0e8;
+      --cream-dim: #d9d0bc;
+      --ink: #0e1a10;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-md: rgba(255, 255, 255, 0.06);
+      --border: rgba(200, 121, 65, 0.22);
+      --border-lt: rgba(200, 121, 65, 0.10);
+      --radius: 2px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       font-family: 'Jost', sans-serif;
@@ -54,26 +65,32 @@
     /* ── NAVBAR ── */
     .navbar {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       z-index: 100;
-      padding: 0 48px;
-      height: 72px;
+      padding: 12px 48px;
+      min-height: 72px;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      background: rgba(14,26,16,0.7);
+      background: rgba(14, 26, 16, 0.7);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border-lt);
     }
+
     .nav-brand {
       display: flex;
       align-items: center;
       gap: 14px;
       text-decoration: none;
     }
+
     .nav-mark {
-      width: 32px; height: 32px;
+      width: 32px;
+      height: 32px;
       border: 2px solid var(--copper);
       transform: rotate(45deg);
       display: flex;
@@ -81,11 +98,14 @@
       justify-content: center;
       flex-shrink: 0;
     }
+
     .nav-mark span {
       display: block;
-      width: 10px; height: 10px;
+      width: 10px;
+      height: 10px;
       background: var(--copper);
     }
+
     .nav-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 20px;
@@ -94,12 +114,15 @@
       text-transform: uppercase;
       color: var(--cream);
     }
+
     .nav-links {
       list-style: none;
       display: flex;
       align-items: center;
-      gap: 36px;
+      gap: 12px 24px;
+      flex-wrap: wrap;
     }
+
     .nav-links a {
       color: var(--cream-dim);
       text-decoration: none;
@@ -110,43 +133,73 @@
       transition: color 0.2s;
       position: relative;
     }
+
     .nav-links a::after {
       content: '';
       position: absolute;
-      bottom: -3px; left: 0;
-      width: 0; height: 1px;
+      bottom: -3px;
+      left: 0;
+      width: 0;
+      height: 1px;
       background: var(--copper);
       transition: width 0.25s ease;
     }
-    .nav-links a:hover { color: var(--cream); }
-    .nav-links a:hover::after { width: 100%; }
-    .nav-links a.active { color: var(--copper-lt); }
-    .nav-links a.active::after { width: 100%; }
+
+    .nav-links a:hover {
+      color: var(--cream);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-links a.active {
+      color: var(--copper-lt);
+    }
+
+    .nav-links a.active::after {
+      width: 100%;
+    }
+
     .nav-user-badge {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      color: var(--cream-dim);
-      letter-spacing: 0.05em;
+      padding: 6px 14px;
+      background: rgba(200, 121, 65, 0.1);
+      border: 1px solid rgba(200, 121, 65, 0.22);
+      border-radius: 2px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--copper);
+      font-weight: 500;
     }
+
     .nav-user-type {
-      font-size: 10px;
+      font-size: 9px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--copper);
-      border: 1px solid var(--border);
-      padding: 1px 6px;
+      color: var(--cream-dim);
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.06);
       border-radius: 2px;
     }
+
     .nav-signout {
       border: 1px solid var(--border) !important;
       padding: 6px 16px !important;
       border-radius: 2px;
       transition: border-color 0.2s, color 0.2s !important;
     }
-    .nav-signout::after { display: none !important; }
-    .nav-signout:hover { border-color: rgba(245,240,232,0.4) !important; color: var(--cream) !important; }
+
+    .nav-signout::after {
+      display: none !important;
+    }
+
+    .nav-signout:hover {
+      border-color: rgba(245, 240, 232, 0.4) !important;
+      color: var(--cream) !important;
+    }
 
     /* ── PAGE LAYOUT ── */
     .page-wrapper {
@@ -159,12 +212,14 @@
     .page-header {
       padding: 64px 48px 40px;
       border-bottom: 1px solid var(--border-lt);
-      background: linear-gradient(180deg, rgba(14,26,16,0.4) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(14, 26, 16, 0.4) 0%, transparent 100%);
     }
+
     .page-header-inner {
       max-width: 1200px;
       margin: 0 auto;
     }
+
     .breadcrumb {
       font-size: 12px;
       letter-spacing: 0.1em;
@@ -175,9 +230,21 @@
       align-items: center;
       gap: 8px;
     }
-    .breadcrumb a { color: var(--cream-dim); text-decoration: none; transition: color 0.2s; }
-    .breadcrumb a:hover { color: var(--cream); }
-    .breadcrumb span { color: var(--border); }
+
+    .breadcrumb a {
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--cream);
+    }
+
+    .breadcrumb span {
+      color: var(--border);
+    }
+
     .page-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: clamp(32px, 5vw, 52px);
@@ -187,7 +254,12 @@
       line-height: 1.1;
       margin-bottom: 8px;
     }
-    .page-title em { font-style: italic; color: var(--copper-lt); }
+
+    .page-title em {
+      font-style: italic;
+      color: var(--copper-lt);
+    }
+
     .page-subtitle {
       font-size: 14px;
       color: var(--cream-dim);
@@ -201,6 +273,7 @@
       margin: 24px auto 0;
       padding: 0 48px;
     }
+
     .alert {
       padding: 14px 20px;
       border-radius: var(--radius);
@@ -211,11 +284,30 @@
       align-items: center;
       gap: 10px;
     }
-    .alert::before { font-size: 16px; }
-    .alert-error   { background: rgba(232,125,125,0.08); border-color: rgba(232,125,125,0.3); color: #e87d7d; }
-    .alert-error::before { content: '⚠'; }
-    .alert-success { background: rgba(125,232,160,0.08); border-color: rgba(125,232,160,0.3); color: #7de8a0; }
-    .alert-success::before { content: '✓'; }
+
+    .alert::before {
+      font-size: 16px;
+    }
+
+    .alert-error {
+      background: rgba(232, 125, 125, 0.08);
+      border-color: rgba(232, 125, 125, 0.3);
+      color: #e87d7d;
+    }
+
+    .alert-error::before {
+      content: '⚠';
+    }
+
+    .alert-success {
+      background: rgba(125, 232, 160, 0.08);
+      border-color: rgba(125, 232, 160, 0.3);
+      color: #7de8a0;
+    }
+
+    .alert-success::before {
+      content: '✓';
+    }
 
     /* ── MAIN CONTENT ── */
     .content {
@@ -244,6 +336,7 @@
       background: var(--forest-mid);
       border-bottom: 1px solid var(--border-lt);
     }
+
     .cart-panel-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: 20px;
@@ -251,12 +344,13 @@
       color: var(--cream);
       letter-spacing: 0.04em;
     }
+
     .cart-count {
       font-size: 11px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--copper);
-      background: rgba(200,121,65,0.10);
+      background: rgba(200, 121, 65, 0.10);
       border: 1px solid var(--border);
       padding: 3px 10px;
       border-radius: 2px;
@@ -267,9 +361,11 @@
       width: 100%;
       border-collapse: collapse;
     }
+
     .items-table thead tr {
       border-bottom: 1px solid var(--border-lt);
     }
+
     .items-table th {
       font-size: 11px;
       letter-spacing: 0.1em;
@@ -279,16 +375,28 @@
       padding: 14px 28px;
       text-align: left;
     }
+
     .items-table th:last-child,
-    .items-table td:last-child { text-align: right; }
+    .items-table td:last-child {
+      text-align: right;
+    }
 
     .items-table tbody tr {
       border-bottom: 1px solid var(--border-lt);
       transition: background 0.2s;
     }
-    .items-table tbody tr:last-child { border-bottom: none; }
-    .items-table tbody tr:hover { background: rgba(200,121,65,0.03); }
-    .items-table tbody tr.row-warn { background: rgba(232,125,125,0.04); }
+
+    .items-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .items-table tbody tr:hover {
+      background: rgba(200, 121, 65, 0.03);
+    }
+
+    .items-table tbody tr.row-warn {
+      background: rgba(232, 125, 125, 0.04);
+    }
 
     .items-table td {
       padding: 18px 28px;
@@ -302,12 +410,14 @@
       color: var(--cream);
       margin-bottom: 3px;
     }
+
     .product-sku {
       font-size: 11px;
       color: var(--cream-dim);
       font-weight: 300;
       letter-spacing: 0.06em;
     }
+
     .product-seller {
       font-size: 11px;
       color: var(--copper);
@@ -319,7 +429,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 32px; height: 32px;
+      width: 32px;
+      height: 32px;
       background: var(--forest-mid);
       border: 1px solid var(--border-lt);
       border-radius: 2px;
@@ -335,11 +446,24 @@
       margin-top: 5px;
       text-transform: uppercase;
     }
-    .stock-ok  { color: #7de8a0; }
-    .stock-low { color: #e8c47d; }
-    .stock-out { color: #e87d7d; }
 
-    .item-price { color: var(--cream-dim); font-size: 13px; }
+    .stock-ok {
+      color: #7de8a0;
+    }
+
+    .stock-low {
+      color: #e8c47d;
+    }
+
+    .stock-out {
+      color: #e87d7d;
+    }
+
+    .item-price {
+      color: var(--cream-dim);
+      font-size: 13px;
+    }
+
     .item-total {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
@@ -353,8 +477,8 @@
       gap: 5px;
       font-size: 11px;
       color: #e87d7d;
-      background: rgba(232,125,125,0.08);
-      border: 1px solid rgba(232,125,125,0.25);
+      background: rgba(232, 125, 125, 0.08);
+      border: 1px solid rgba(232, 125, 125, 0.25);
       padding: 3px 9px;
       border-radius: 2px;
       margin-top: 4px;
@@ -375,6 +499,7 @@
       background: var(--forest-mid);
       border-bottom: 1px solid var(--border-lt);
     }
+
     .summary-panel-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: 20px;
@@ -383,7 +508,9 @@
       letter-spacing: 0.04em;
     }
 
-    .summary-body { padding: 24px; }
+    .summary-body {
+      padding: 24px;
+    }
 
     /* Price rows */
     .price-row {
@@ -394,20 +521,40 @@
       border-bottom: 1px solid var(--border-lt);
       font-size: 14px;
     }
-    .price-row:last-of-type { border-bottom: none; }
-    .price-label { color: var(--cream-dim); font-weight: 300; }
+
+    .price-row:last-of-type {
+      border-bottom: none;
+    }
+
+    .price-label {
+      color: var(--cream-dim);
+      font-weight: 300;
+    }
+
     .price-value {
       font-family: 'Cormorant Garamond', serif;
       font-size: 18px;
       color: var(--cream);
     }
+
     .price-row.total {
       margin-top: 8px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
     }
-    .price-row.total .price-label { color: var(--cream); font-weight: 500; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
-    .price-row.total .price-value { font-size: 26px; color: var(--copper-lt); }
+
+    .price-row.total .price-label {
+      color: var(--cream);
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .price-row.total .price-value {
+      font-size: 26px;
+      color: var(--copper-lt);
+    }
 
     /* Address selector */
     .address-section {
@@ -415,6 +562,7 @@
       padding-top: 24px;
       border-top: 1px solid var(--border-lt);
     }
+
     .address-section-label {
       font-size: 11px;
       letter-spacing: 0.12em;
@@ -426,8 +574,8 @@
 
     .address-select {
       width: 100%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(245,240,232,0.15);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(245, 240, 232, 0.15);
       padding: 12px 16px;
       color: var(--cream);
       font-family: 'Jost', sans-serif;
@@ -443,10 +591,12 @@
       background-position: right 14px center;
       transition: border-color 0.2s, background-color 0.2s;
     }
+
     .address-select:focus {
       border-color: var(--copper);
-      background-color: rgba(200,121,65,0.05);
+      background-color: rgba(200, 121, 65, 0.05);
     }
+
     .address-select option {
       background: var(--forest-mid);
       color: var(--cream);
@@ -463,7 +613,10 @@
       letter-spacing: 0.04em;
       transition: color 0.2s;
     }
-    .add-address-link:hover { color: var(--copper-lt); }
+
+    .add-address-link:hover {
+      color: var(--copper-lt);
+    }
 
     /* Checkout button */
     .checkout-btn {
@@ -483,12 +636,17 @@
       border-radius: 2px;
       transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
     }
+
     .checkout-btn:hover {
       background: var(--copper-lt);
       transform: translateY(-1px);
-      box-shadow: 0 8px 28px rgba(200,121,65,0.28);
+      box-shadow: 0 8px 28px rgba(200, 121, 65, 0.28);
     }
-    .checkout-btn:active { transform: translateY(0); }
+
+    .checkout-btn:active {
+      transform: translateY(0);
+    }
+
     .checkout-btn:disabled {
       background: var(--forest-lt);
       color: var(--cream-dim);
@@ -506,7 +664,11 @@
       letter-spacing: 0.03em;
       line-height: 1.6;
     }
-    .checkout-note strong { color: var(--copper); font-weight: 400; }
+
+    .checkout-note strong {
+      color: var(--copper);
+      font-weight: 400;
+    }
 
     /* ── EMPTY STATE ── */
     .empty-state {
@@ -517,8 +679,10 @@
       border-radius: var(--radius);
       background: var(--glass);
     }
+
     .empty-icon {
-      width: 64px; height: 64px;
+      width: 64px;
+      height: 64px;
       border: 1px solid var(--border);
       transform: rotate(45deg);
       margin: 0 auto 32px;
@@ -526,8 +690,10 @@
       align-items: center;
       justify-content: center;
     }
+
     .empty-icon-inner {
-      width: 24px; height: 24px;
+      width: 24px;
+      height: 24px;
       background: var(--forest-lt);
       display: flex;
       align-items: center;
@@ -535,6 +701,7 @@
       transform: rotate(-45deg);
       font-size: 14px;
     }
+
     .empty-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: 28px;
@@ -542,12 +709,14 @@
       color: var(--cream);
       margin-bottom: 12px;
     }
+
     .empty-text {
       font-size: 14px;
       color: var(--cream-dim);
       font-weight: 300;
       margin-bottom: 32px;
     }
+
     .btn-primary {
       display: inline-block;
       padding: 12px 32px;
@@ -561,7 +730,11 @@
       border-radius: var(--radius);
       transition: background 0.2s, transform 0.15s;
     }
-    .btn-primary:hover { background: var(--copper-lt); transform: translateY(-1px); }
+
+    .btn-primary:hover {
+      background: var(--copper-lt);
+      transform: translateY(-1px);
+    }
 
     /* ── CART CONTROLS (qty update + remove) ── */
     .cart-controls {
@@ -580,7 +753,7 @@
 
     .qty-input {
       width: 58px;
-      background: rgba(14,26,16,0.6);
+      background: rgba(14, 26, 16, 0.6);
       border: 1px solid var(--border);
       color: var(--cream);
       padding: 5px 8px;
@@ -611,17 +784,17 @@
 
     .btn-update {
       color: var(--copper);
-      border-color: rgba(200,121,65,0.35);
+      border-color: rgba(200, 121, 65, 0.35);
     }
 
     .btn-update:hover {
-      background: rgba(200,121,65,0.10);
+      background: rgba(200, 121, 65, 0.10);
       border-color: var(--copper);
     }
 
     .btn-remove {
       color: #e87d7d;
-      border-color: rgba(232,125,125,0.28);
+      border-color: rgba(232, 125, 125, 0.28);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
@@ -629,8 +802,8 @@
     }
 
     .btn-remove:hover {
-      background: rgba(232,125,125,0.10);
-      border-color: rgba(232,125,125,0.55);
+      background: rgba(232, 125, 125, 0.10);
+      border-color: rgba(232, 125, 125, 0.55);
     }
 
     /* ── RESPONSIVE ── */
@@ -639,15 +812,31 @@
         grid-template-columns: 1fr;
         padding: 32px 20px 60px;
       }
-      .summary-panel { position: static; }
-      .navbar { padding: 0 20px; }
-      .page-header { padding: 48px 20px 32px; }
-      .messages-wrap { padding: 0 20px; }
+
+      .summary-panel {
+        position: static;
+      }
+
+      .navbar {
+        padding: 0 20px;
+      }
+
+      .page-header {
+        padding: 48px 20px 32px;
+      }
+
+      .messages-wrap {
+        padding: 0 20px;
+      }
+
       .items-table th:nth-child(3),
-      .items-table td:nth-child(3) { display: none; }
+      .items-table td:nth-child(3) {
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- NAVBAR -->
@@ -657,30 +846,38 @@
       <span class="nav-name">StockFlow</span>
     </a>
     <ul class="nav-links">
+      <li><a href="{% url 'items' %}">Browse</a></li>
+      <li><a href="{% url 'cart' %}" class="active">My Cart</a></li>
+      <li><a href="{% url 'order_history' %}">My Orders</a></li>
+      <li><a href="{% url 'add_address' %}">Add Address</a></li>
+      <li><a href="{% url 'wallet' %}">Wallet</a></li>
+      <li><a href="{% url 'profile' %}">Profile</a></li>
+      <li><a href="{% url 'notifications' %}" class="nav-notif-link" style="display:inline-flex;align-items:center;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+        </a></li>
       <li>
         <span class="nav-user-badge">
           {{ user_name }}
           <span class="nav-user-type">buyer</span>
         </span>
       </li>
-      <li><a href="{% url 'items' %}">Item List</a></li>
-      <li><a href="{% url 'cart' %}" class="active">My Cart</a></li>
-      <li><a href="{% url 'order_history' %}">My Orders</a></li>
-      <li><a href="{% url 'add_address' %}">Add Address</a></li>
-      <li><a href="{% url 'profile' %}">Profile</a></li>
       <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
     </ul>
   </nav>
 
   <!-- FLASH MESSAGES -->
   {% if messages %}
-    <div class="messages-wrap" style="margin-top: 96px;">
-      {% for message in messages %}
-        <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
+  <div class="messages-wrap" style="margin-top: 96px;">
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+      {{ message }}
     </div>
+    {% endfor %}
+  </div>
   {% endif %}
 
   <div class="page-wrapper">
@@ -703,154 +900,143 @@
 
       {% if cart_items %}
 
-        <!-- ── CART ITEMS TABLE ── -->
-        <div class="cart-panel">
-          <div class="cart-panel-header">
-            <span class="cart-panel-title">Items</span>
-            <span class="cart-count">{{ cart_items|length }} item{{ cart_items|length|pluralize }}</span>
-          </div>
-
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Line Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in cart_items %}
-                <tr {% if item.insufficient %}class="row-warn"{% endif %}>
-                  <td>
-                    <div class="product-name">{{ item.product.name }}</div>
-                    <div class="product-sku">SKU: {{ item.product.sku }}</div>
-                    <div class="product-seller">by {{ item.product.seller }}</div>
-                    {% if item.insufficient %}
-                      <div class="warn-row-label">⚠ Only {{ item.stock }} in stock</div>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <!-- Quantity update form -->
-                    <form method="POST" action="{% url 'cart_update' item.product.id %}" class="qty-form">
-                      {% csrf_token %}
-                      <input
-                        type="number"
-                        name="quantity"
-                        value="{{ item.quantity }}"
-                        min="1"
-                        max="{{ item.stock }}"
-                        class="qty-input"
-                        aria-label="Quantity"
-                      />
-                      <button type="submit" class="btn-cart-action btn-update">Update</button>
-                    </form>
-                    <!-- Remove link -->
-                    <div class="cart-controls">
-                      <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove btn-cart-action">✕ Remove</a>
-                      {% if item.stock > 0 and not item.insufficient %}
-                        <span class="stock-tag stock-ok">✓ {{ item.stock }} available</span>
-                      {% elif item.insufficient and item.stock > 0 %}
-                        <span class="stock-tag stock-low">{{ item.stock }} left</span>
-                      {% else %}
-                        <span class="stock-tag stock-out">Out of stock</span>
-                      {% endif %}
-                    </div>
-                  </td>
-                  <td><span class="item-price">₹{{ item.product.price }}</span></td>
-                  <td><span class="item-total">₹{{ item.line_total }}</span></td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      <!-- ── CART ITEMS TABLE ── -->
+      <div class="cart-panel">
+        <div class="cart-panel-header">
+          <span class="cart-panel-title">Items</span>
+          <span class="cart-count">{{ cart_items|length }} item{{ cart_items|length|pluralize }}</span>
         </div>
 
-        <!-- ── ORDER SUMMARY PANEL ── -->
-        <aside class="summary-panel">
-          <div class="summary-panel-header">
-            <span class="summary-panel-title">Order Summary</span>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in cart_items %}
+            <tr {% if item.insufficient %}class="row-warn" {% endif %}>
+              <td>
+                <div class="product-name">{{ item.product.name }}</div>
+                <div class="product-sku">SKU: {{ item.product.sku }}</div>
+                <div class="product-seller">by {{ item.product.seller }}</div>
+                {% if item.insufficient %}
+                <div class="warn-row-label">⚠ Only {{ item.stock }} in stock</div>
+                {% endif %}
+              </td>
+              <td>
+                <!-- Quantity update form -->
+                <form method="POST" action="{% url 'cart_update' item.product.id %}" class="qty-form">
+                  {% csrf_token %}
+                  <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.stock }}"
+                    class="qty-input" aria-label="Quantity" />
+                  <button type="submit" class="btn-cart-action btn-update">Update</button>
+                </form>
+                <!-- Remove link -->
+                <div class="cart-controls">
+                  <a href="{% url 'cart_remove' item.product.id %}" class="btn-remove btn-cart-action">✕ Remove</a>
+                  {% if item.stock > 0 and not item.insufficient %}
+                  <span class="stock-tag stock-ok">✓ {{ item.stock }} available</span>
+                  {% elif item.insufficient and item.stock > 0 %}
+                  <span class="stock-tag stock-low">{{ item.stock }} left</span>
+                  {% else %}
+                  <span class="stock-tag stock-out">Out of stock</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td><span class="item-price">₹{{ item.product.price }}</span></td>
+              <td><span class="item-total">₹{{ item.line_total }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── ORDER SUMMARY PANEL ── -->
+      <aside class="summary-panel">
+        <div class="summary-panel-header">
+          <span class="summary-panel-title">Order Summary</span>
+        </div>
+
+        <div class="summary-body">
+          <!-- Price breakdown -->
+          <div class="price-row">
+            <span class="price-label">Subtotal</span>
+            <span class="price-value">₹{{ subtotal }}</span>
+          </div>
+          <div class="price-row">
+            <span class="price-label">Shipping</span>
+            <span class="price-value" style="font-size:14px; color: var(--cream-dim);">Calculated at delivery</span>
+          </div>
+          <div class="price-row total">
+            <span class="price-label">Total</span>
+            <span class="price-value">₹{{ subtotal }}</span>
           </div>
 
-          <div class="summary-body">
-            <!-- Price breakdown -->
-            <div class="price-row">
-              <span class="price-label">Subtotal</span>
-              <span class="price-value">₹{{ subtotal }}</span>
-            </div>
-            <div class="price-row">
-              <span class="price-label">Shipping</span>
-              <span class="price-value" style="font-size:14px; color: var(--cream-dim);">Calculated at delivery</span>
-            </div>
-            <div class="price-row total">
-              <span class="price-label">Total</span>
-              <span class="price-value">₹{{ subtotal }}</span>
-            </div>
+          <!-- Address selector -->
+          <div class="address-section">
+            <span class="address-section-label">Ship to</span>
 
-            <!-- Address selector -->
-            <div class="address-section">
-              <span class="address-section-label">Ship to</span>
+            <form method="POST" action="{% url 'checkout' %}" id="checkout-form">
+              {% csrf_token %}
 
-              <form method="POST" action="{% url 'checkout' %}" id="checkout-form">
-                {% csrf_token %}
+              {% if addresses %}
+              <select name="address_id" id="address_id" class="address-select" required>
+                <option value="" disabled selected>Select a delivery address…</option>
+                {% for addr in addresses %}
+                <option value="{{ addr.id }}" {% if addr.is_default %}selected{% endif %}>
+                  {{ addr.line1 }}{% if addr.line2 %}, {{ addr.line2 }}{% endif %} — {{ addr.city }}, {{ addr.state }}
+                  {{ addr.postal_code }}
+                </option>
+                {% endfor %}
+              </select>
+              {% else %}
+              <p style="font-size:13px; color:var(--cream-dim); font-weight:300; line-height:1.6;">
+                You have no saved addresses yet.
+              </p>
+              {% endif %}
 
-                {% if addresses %}
-                  <select name="address_id" id="address_id" class="address-select" required>
-                    <option value="" disabled selected>Select a delivery address…</option>
-                    {% for addr in addresses %}
-                      <option value="{{ addr.id }}" {% if addr.is_default %}selected{% endif %}>
-                        {{ addr.line1 }}{% if addr.line2 %}, {{ addr.line2 }}{% endif %} — {{ addr.city }}, {{ addr.state }} {{ addr.postal_code }}
-                      </option>
-                    {% endfor %}
-                  </select>
-                {% else %}
-                  <p style="font-size:13px; color:var(--cream-dim); font-weight:300; line-height:1.6;">
-                    You have no saved addresses yet.
-                  </p>
-                {% endif %}
+              <a href="{% url 'add_address' %}" class="add-address-link">
+                + Add a new address
+              </a>
 
-                <a href="{% url 'add_address' %}" class="add-address-link">
-                  + Add a new address
-                </a>
-
-                {% if addresses %}
-                  <!-- Disable button if any item has insufficient stock -->
-                  {% with has_warn=False %}
-                    {% for item in cart_items %}{% if item.insufficient %}{% with has_warn=True %}{% endwith %}{% endif %}{% endfor %}
-                  {% endwith %}
-                  <button
-                    type="submit"
-                    class="checkout-btn"
-                    id="place-order-btn"
-                    {% for item in cart_items %}{% if item.insufficient %}disabled{% endif %}{% endfor %}
-                  >
-                    Place Order →
-                  </button>
-                {% else %}
-                  <button type="button" class="checkout-btn" disabled>
-                    Add an Address to Continue
-                  </button>
-                {% endif %}
-              </form>
-            </div>
-
-            <p class="checkout-note">
-              Your order will be <strong>Pending</strong> until all sellers approve.<br>
-              Inventory is deducted only after full approval.
-            </p>
+              {% if addresses %}
+              <!-- Disable button if any item has insufficient stock -->
+              {% with has_warn=False %}
+              {% for item in cart_items %}{% if item.insufficient %}{% with has_warn=True %}{% endwith %}{% endif %}{% endfor %}
+              {% endwith %}
+              <button type="submit" class="checkout-btn" id="place-order-btn" {% for item in cart_items %}{% if item.insufficient %}disabled{% endif %}{% endfor %}>
+                Place Order →
+              </button>
+              {% else %}
+              <button type="button" class="checkout-btn" disabled>
+                Add an Address to Continue
+              </button>
+              {% endif %}
+            </form>
           </div>
-        </aside>
+
+          <p class="checkout-note">
+            Your order will be <strong>Pending</strong> until all sellers approve.<br>
+            Inventory is deducted only after full approval.
+          </p>
+        </div>
+      </aside>
 
       {% else %}
 
-        <!-- ── EMPTY STATE ── -->
-        <div class="empty-state">
-          <div class="empty-icon">
-            <div class="empty-icon-inner">🛒</div>
-          </div>
-          <h2 class="empty-title">Your cart is empty</h2>
-          <p class="empty-text">Browse products and add items to your cart to get started.</p>
-          <a href="{% url 'items' %}" class="btn-primary">Browse Items →</a>
+      <!-- ── EMPTY STATE ── -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <div class="empty-icon-inner">🛒</div>
         </div>
+        <h2 class="empty-title">Your cart is empty</h2>
+        <p class="empty-text">Browse products and add items to your cart to get started.</p>
+        <a href="{% url 'items' %}" class="btn-primary">Browse Items →</a>
+      </div>
 
       {% endif %}
 
@@ -858,4 +1044,5 @@
   </div><!-- /page-wrapper -->
 
 </body>
+
 </html>
