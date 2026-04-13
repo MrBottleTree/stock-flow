@@ -518,7 +518,6 @@
   <main class="shell" style="padding-top: 110px;">
 
     {% if item_rows %}
-    <!-- FILTER TABS -->
     <div class="filter-bar" id="item-filter-bar">
       <button class="filter-btn active" data-filter="all">All Items</button>
       <button class="filter-btn" data-filter="instock">In Stock</button>
@@ -541,7 +540,7 @@
         <div class="meta">
           <div class="meta-box">
             <p class="meta-label">Price</p>
-            <p class="meta-value">${{ item.price }}</p>
+            <p class="meta-value">₹{{ item.price }}</p>
           </div>
           <div class="meta-box">
             <p class="meta-label">Stock Units</p>
