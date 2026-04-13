@@ -663,12 +663,10 @@
         </span>
       </li>
       <li><a href="{% url 'items' %}">Item List</a></li>
-      <li><a href="{% url 'cart' %}" style="color:var(--copper);">🛒 My Cart</a></li>
+      <li><a href="{% url 'cart' %}" style="color:var(--copper);">My Cart</a></li>
       <li><a href="{% url 'order_history' %}">My Orders</a></li>
-      <li><a href="{% url 'notifications' %}" style="position:relative; display:inline-flex; align-items:center; gap:6px;">
-        🔔 Notifications
-        {% if unread_notification_count %}<span style="position:absolute; top:-8px; right:-12px; min-width:18px; height:18px; background:var(--copper); color:var(--ink); font-size:10px; font-weight:600; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; line-height:1; letter-spacing:0; text-transform:none;">{{ unread_notification_count }}</span>{% endif %}
-      </a></li>
+      <li><a href="{% url 'add_address' %}">Add Address</a></li>
+      <li><a href="{% url 'profile' %}">Profile</a></li>
       <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
     </ul>
   </nav>
