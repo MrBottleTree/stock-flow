@@ -34,7 +34,6 @@
       color: var(--cream);
       min-height: 100vh;
     }
-
     body::before {
       content: '';
       position: fixed;
@@ -298,7 +297,7 @@
         grid-template-columns: 1fr;
       }
     }
-    /* ── Premium Navbar ── */
+    /* ── NAVBAR ── */
     .navbar {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -314,119 +313,115 @@
       border-bottom: 1px solid var(--border-lt);
     }
     .nav-brand {
-      display: flex; align-items: center; gap: 14px; text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
     }
     .nav-mark {
-      width: 32px; height: 32px; border: 2px solid var(--copper);
-      transform: rotate(45deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 32px; height: 32px;
+      border: 2px solid var(--copper);
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    .nav-mark span { display: block; width: 10px; height: 10px; background: var(--copper); }
+    .nav-mark span {
+      display: block;
+      width: 10px; height: 10px;
+      background: var(--copper);
+    }
     .nav-name {
-      font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 500;
-      letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cream);
     }
-    .nav-links { list-style: none; display: flex; align-items: center; gap: 28px; }
+    .nav-links {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
     .nav-links a {
-      color: var(--cream-dim); text-decoration: none; font-size: 12px;
-      letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400;
-      transition: color 0.2s; position: relative;
+      color: var(--cream-dim);
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 400;
+      transition: color 0.2s;
+      position: relative;
     }
     .nav-links a::after {
-      content: ''; position: absolute; bottom: -3px; left: 0;
-      width: 0; height: 1px; background: var(--copper); transition: width 0.25s ease;
+      content: '';
+      position: absolute;
+      bottom: -3px; left: 0;
+      width: 0; height: 1px;
+      background: var(--copper);
+      transition: width 0.25s ease;
     }
     .nav-links a:hover { color: var(--cream); }
     .nav-links a:hover::after { width: 100%; }
     .nav-links a.active { color: var(--copper-lt); }
     .nav-links a.active::after { width: 100%; }
     .nav-user-badge {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: var(--cream-dim); letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--cream-dim);
+      letter-spacing: 0.05em;
     }
     .nav-user-type {
-      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--copper); border: 1px solid var(--border); padding: 1px 6px; border-radius: 2px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--copper);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 2px;
     }
     .nav-signout {
-      border: 1px solid var(--border) !important; padding: 6px 16px !important; border-radius: 2px;
+      border: 1px solid var(--border) !important;
+      padding: 6px 16px !important;
+      border-radius: 2px;
       transition: border-color 0.2s, color 0.2s !important;
     }
     .nav-signout::after { display: none !important; }
     .nav-signout:hover { border-color: rgba(245,240,232,0.4) !important; color: var(--cream) !important; }
-    .nav-notif-link { position: relative; display: flex; align-items: center; gap: 6px; }
-    .nav-notif-badge {
-      position: absolute; top: -8px; right: -12px;
-      min-width: 18px; height: 18px; background: var(--copper); color: var(--ink);
-      font-size: 10px; font-weight: 600; border-radius: 9px;
-      display: flex; align-items: center; justify-content: center;
-      padding: 0 4px; line-height: 1; letter-spacing: 0; text-transform: none;
-    }
   </style>
 </head>
 <body>
-  <!-- PREMIUM NAVBAR -->
   <nav class="navbar">
-    <a href="{% url 'home' %}" class="nav-brand">
-      <div class="nav-mark"><span></span></div>
-      <span class="nav-name">StockFlow</span>
-    </a>
-    <ul class="nav-links">
-      <li>
-        <span class="nav-user-badge">
-          <span>{% if user_type == 'buyer' %}🛍{% else %}📦{% endif %}</span>
-          {{ user_name }}
-          <span class="nav-user-type">{{ user_type }}</span>
-        </span>
-      </li>
-      <li><a href="{% url 'home' %}">Home</a></li>
-      <li><a href="{% url 'items' %}" class="active">Item List</a></li>
-      {% if user_type == 'seller' %}
-        <li><a href="{% url 'inventory' %}">My Inventory</a></li>
-      {% elif user_type == 'buyer' %}
-        <li><a href="{% url 'cart' %}">🛒 Cart</a></li>
-        <li><a href="{% url 'order_history' %}">Orders</a></li>
-      {% endif %}
-      <li><a href="{% url 'notifications' %}" class="nav-notif-link">
-        🔔 Notifications
-        {% if unread_notification_count %}<span class="nav-notif-badge">{{ unread_notification_count }}</span>{% endif %}
-      </a></li>
-      <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
-    </ul>
-  </nav>
+      <a href="{% url 'home' %}" class="nav-brand">
+        <div class="nav-mark"><span></span></div>
+        <span class="nav-name">StockFlow</span>
+      </a>
+      <ul class="nav-links">
+        <li>
+          <span class="nav-user-badge">
+            {{ user_name }}
+            <span class="nav-user-type">{{ user_type }}</span>
+          </span>
+        </li>
+        <li><a href="{% url 'items' %}" class="active">Item List</a></li>
+        {% if user_type == 'seller' %}
+          <li><a href="{% url 'inventory' %}">My Inventory</a></li>
+        {% elif user_type == 'buyer' %}
+          <li><a href="{% url 'cart' %}">My Cart</a></li>
+          <li><a href="{% url 'order_history' %}">My Orders</a></li>
+        {% endif %}
+        <li><a href="{% url 'add_address' %}">Add Address</a></li>
+        <li><a href="{% url 'profile' %}">Profile</a></li>
+        <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
+      </ul>
+    </nav>
 
-  <main class="shell" style="padding-top: 110px;">
-    <header class="header">
-      <div>
-        <span class="eyebrow">Items Page</span>
-        <h1 class="title">{{ page_title|default:"Marketplace Item List" }}</h1>
-        <p class="subtitle">{{ page_subtitle|default:"Welcome to the marketplace." }}</p>
-      </div>
-      <div class="actions">
-        <div style="display: flex; gap: 4px;">
-          <a class="btn {% if not is_sold_out_tab %}primary{% endif %}" href="{% url 'items' %}">All Items</a>
-          <a class="btn {% if is_sold_out_tab %}primary{% endif %}" href="{% url 'sold_out_items' %}">Sold Out Items</a>
-        </div>
-      </div>
-    </header>
-
-    <section class="stats-grid">
-      <article class="stat">
-        <p class="stat-label">Total Items</p>
-        <p class="stat-value">{{ stats.total_items }}</p>
-      </article>
-      <article class="stat">
-        <p class="stat-label">Stock Units</p>
-        <p class="stat-value">{{ stats.total_stock_units }}</p>
-      </article>
-      <article class="stat">
-        <p class="stat-label">Low Stock</p>
-        <p class="stat-value">{{ stats.low_stock_items }}</p>
-      </article>
-      <article class="stat">
-        <p class="stat-label">Out of Stock</p>
-        <p class="stat-value">{{ stats.out_of_stock_items }}</p>
-      </article>
-    </section>
+    <main class="shell" style="padding-top: 110px;">
 
     {% if item_rows %}
       <section class="catalog">

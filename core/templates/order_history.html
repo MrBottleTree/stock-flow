@@ -85,6 +85,8 @@
     .nav-mark span {
       display: block;
       width: 10px; height: 10px;
+      .nav-links a.active { color: var(--copper-lt); }
+      .nav-links a.active::after { width: 100%; }
       background: var(--copper);
     }
     .nav-name {
@@ -527,14 +529,13 @@
     <ul class="nav-links">
       <li>
         <span class="nav-user-badge">
-          <span>🛍</span>
           {{ user_name }}
           <span class="nav-user-type">buyer</span>
         </span>
       </li>
       <li><a href="{% url 'items' %}">Item List</a></li>
       <li><a href="{% url 'cart' %}">My Cart</a></li>
-      <li><a href="{% url 'order_history' %}">My Orders</a></li>
+        <li><a href="{% url 'order_history' %}" class="active">My Orders</a></li>
       <li><a href="{% url 'add_address' %}">Add Address</a></li>
       <li><a href="{% url 'profile' %}">Profile</a></li>
       <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
