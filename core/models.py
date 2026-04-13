@@ -6,6 +6,13 @@ class Buyer(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=128, blank=True, default="")
+    wallet = models.OneToOneField(
+        'Wallet',
+        on_delete=models.CASCADE,
+        related_name='buyer_owner',
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name
@@ -43,6 +50,13 @@ class Seller(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=128, blank=True, default="")
+    wallet = models.OneToOneField(
+        'Wallet',
+        on_delete=models.CASCADE,
+        related_name='seller_owner',
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name
@@ -210,26 +224,16 @@ class Notification(models.Model):
 
 
 class Wallet(models.Model):
-    buyer = models.OneToOneField(
-        Buyer,
-        on_delete=models.CASCADE,
-        related_name="wallet",
-        blank=True,
-        null=True,
-    )
-    seller = models.OneToOneField(
-        Seller,
-        on_delete=models.CASCADE,
-        related_name="wallet",
-        blank=True,
-        null=True,
-    )
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        owner = self.buyer or self.seller
-        return f"Wallet of {owner} — ₹{self.balance}"
+        # Check who owns this wallet via the reverse relation
+        if hasattr(self, 'buyer_owner'):
+            return f"Wallet of {self.buyer_owner.name} — ₹{self.balance}"
+        if hasattr(self, 'seller_owner'):
+            return f"Wallet of {self.seller_owner.name} — ₹{self.balance}"
+        return f"Wallet #{self.id} — ₹{self.balance}"
 
 
 class Transaction(models.Model):

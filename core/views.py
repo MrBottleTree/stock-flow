@@ -180,6 +180,16 @@ def _get_valid_session_user(request):
     return user, user_type
 
 
+def _get_or_create_wallet(user):
+    """Return the user's wallet, creating one if needed."""
+    if user.wallet:
+        return user.wallet
+    wallet = Wallet.objects.create()
+    user.wallet = wallet
+    user.save(update_fields=['wallet'])
+    return wallet
+
+
 def _render_items_page(request, filter_sold_out=False):
     user, user_type = _get_valid_session_user(request)
     if not user:
@@ -317,10 +327,7 @@ def signup(request):
         password=make_password(password),
     )
     # Auto-create wallet for new user
-    if user_type == 'buyer':
-        Wallet.objects.get_or_create(buyer=user)
-    elif user_type == 'seller':
-        Wallet.objects.get_or_create(seller=user)
+    _get_or_create_wallet(user)
 
     request.session['user_id'] = user.id
     request.session['user_type'] = user_type
@@ -418,10 +425,7 @@ def signup_page(request):
                     password=make_password(password),
                 )
                 # Auto-create wallet for new user
-                if user_type == 'buyer':
-                    Wallet.objects.get_or_create(buyer=new_user)
-                elif user_type == 'seller':
-                    Wallet.objects.get_or_create(seller=new_user)
+                _get_or_create_wallet(new_user)
                 messages.success(request, 'Account created! Please sign in.')
                 return redirect('signin_page')
 
@@ -650,7 +654,7 @@ def checkout(request):
             total_amount = sum(ci.product.price * ci.quantity for ci in cart_items)
 
             # ── WALLET: Debit buyer ──
-            buyer_wallet, _ = Wallet.objects.get_or_create(buyer=buyer)
+            buyer_wallet = _get_or_create_wallet(buyer)
             if buyer_wallet.balance < total_amount:
                 raise ValueError(
                     f"Insufficient wallet balance. Your balance is ₹{buyer_wallet.balance} "
@@ -920,28 +924,43 @@ def item_detail(request, product_id):
 
 
 def profile(request):
-    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
-        messages.error(request, 'Please sign in as a buyer to view your profile.')
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        messages.error(request, 'Please sign in to view your profile.')
         return redirect('signin_page')
 
-    buyer = Buyer.objects.get(id=request.session['user_id'])
-    orders = (
-        Order.objects
-        .filter(buyer=buyer)
-        .prefetch_related('items__product')
-        .select_related('address')
-        .order_by('-placed_at')
-    )
-    addresses   = Address.objects.filter(buyer=buyer)
-    total_spent = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    if user_type == 'buyer':
+        orders = (
+            Order.objects
+            .filter(buyer=user)
+            .prefetch_related('items__product')
+            .select_related('address')
+            .order_by('-placed_at')
+        )
+        addresses = Address.objects.filter(buyer=user)
+        total_spent = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_earned = 0
+    else:  # seller
+        orders = (
+            Order.objects
+            .filter(items__product__seller=user)
+            .distinct()
+            .prefetch_related('items__product')
+            .select_related('address')
+            .order_by('-placed_at')
+        )
+        addresses = Address.objects.filter(seller=user)
+        total_spent = 0
+        total_earned = OrderItem.objects.filter(product__seller=user, status='Approved').aggregate(total=Sum('line_total'))['total'] or 0
 
     return render(request, 'profile.html', {
         'orders':      orders,
         'addresses':   addresses,
         'total_spent': total_spent,
-        'user_name':   buyer.name,
-        'user_email':  buyer.email,
-        'user_type':   'buyer',
+        'total_earned': total_earned,
+        'user_name':   user.name,
+        'user_email':  user.email,
+        'user_type':   user_type,
         'unread_notification_count': _get_unread_notification_count(request),
     })
 
@@ -1176,7 +1195,8 @@ def seller_approve_item(request, item_id):
                 seller_totals[sid] = seller_totals.get(sid, Decimal('0')) + item.line_total
 
             for sid, amount in seller_totals.items():
-                seller_wallet, _ = Wallet.objects.get_or_create(seller_id=sid)
+                seller_obj = Seller.objects.get(id=sid)
+                seller_wallet = _get_or_create_wallet(seller_obj)
                 seller_wallet.balance += amount
                 seller_wallet.save()
                 Transaction.objects.create(
@@ -1249,7 +1269,7 @@ def seller_reject_item(request, item_id):
         order.items.filter(status='Pending').update(status='Rejected')
 
         # ── WALLET: Refund the buyer ──
-        buyer_wallet, _ = Wallet.objects.get_or_create(buyer=order.buyer)
+        buyer_wallet = _get_or_create_wallet(order.buyer)
         buyer_wallet.balance += order.total_amount
         buyer_wallet.save()
         Transaction.objects.create(
@@ -1368,10 +1388,7 @@ def wallet_page(request):
         return redirect('signin_page')
 
     # Get or create wallet
-    if user_type == 'buyer':
-        user_wallet, _ = Wallet.objects.get_or_create(buyer=user)
-    else:
-        user_wallet, _ = Wallet.objects.get_or_create(seller=user)
+    user_wallet = _get_or_create_wallet(user)
 
     transactions = user_wallet.transactions.select_related('order').all()
 
@@ -1408,10 +1425,7 @@ def add_funds(request):
     amount = Decimal('10000.00')
 
     with transaction.atomic():
-        if user_type == 'buyer':
-            user_wallet, _ = Wallet.objects.get_or_create(buyer=user)
-        else:
-            user_wallet, _ = Wallet.objects.get_or_create(seller=user)
+        user_wallet = _get_or_create_wallet(user)
 
         user_wallet.balance += amount
         user_wallet.save()
