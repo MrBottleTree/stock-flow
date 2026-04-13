@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notifications — StockFlow</title>
-  <meta name="description" content="View and manage your order notifications, approvals, and updates on StockFlow." />
+  <title>Wallet — StockFlow</title>
+  <meta name="description" content="Manage your StockFlow wallet — view balance, transaction history, and add funds." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -225,18 +225,108 @@
       font-weight: 300;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
     /* ── MAIN CONTENT ── */
     .content {
       max-width: 1100px;
       margin: 0 auto;
       padding: 48px 48px 80px;
     }
+
+    /* ── BALANCE HERO ── */
+    .balance-hero {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--forest-mid) 0%, var(--forest-lt) 50%, var(--forest-mid) 100%);
+      padding: 48px;
+      text-align: center;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .balance-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(ellipse at center, var(--copper-glow) 0%, transparent 60%);
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    .balance-label {
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .balance-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(42px, 8vw, 72px);
+      font-weight: 400;
+      color: var(--cream);
+      line-height: 1;
+      margin-bottom: 24px;
+      position: relative;
+      letter-spacing: 0.02em;
+    }
+    .balance-amount .currency {
+      font-size: 0.5em;
+      color: var(--copper-lt);
+      vertical-align: super;
+      margin-right: 4px;
+    }
+    .balance-actions {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 36px;
+      background: var(--copper);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      font-family: 'Jost', sans-serif;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      background: var(--copper-lt);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(200,121,65,0.3);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--border-lt);
+      color: var(--cream-dim);
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      text-decoration: none;
+    }
+    .btn-ghost:hover { border-color: var(--border); color: var(--cream); }
 
     /* ── SUMMARY BAR ── */
     .summary-bar {
@@ -271,6 +361,8 @@
       line-height: 1;
     }
     .summary-stat-value.copper { color: var(--copper-lt); }
+    .summary-stat-value.green  { color: var(--success); }
+    .summary-stat-value.red    { color: var(--danger); }
 
     /* ── FILTER TABS ── */
     .filter-bar {
@@ -308,6 +400,168 @@
     .filter-btn.active .filter-count {
       background: var(--copper-glow);
       color: var(--copper);
+    }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--cream);
+      letter-spacing: 0.03em;
+      margin-bottom: 24px;
+    }
+    .section-title em { font-style: italic; color: var(--copper-lt); }
+
+    /* ── TRANSACTION CARDS ── */
+    .txn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .txn-card {
+      border: 1px solid var(--border-lt);
+      border-radius: var(--radius);
+      background: var(--glass);
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.2s;
+      animation: slideUp 0.35s ease both;
+    }
+    .txn-card:hover {
+      border-color: var(--border);
+      transform: translateY(-1px);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .txn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .txn-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .txn-icon {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      border: 1px solid;
+    }
+    .txn-icon.credit   { background: var(--success-bg); border-color: var(--success-bdr); color: var(--success); }
+    .txn-icon.refund   { background: var(--info-bg);    border-color: var(--info-bdr);    color: var(--info); }
+    .txn-icon.debit    { background: var(--danger-bg);  border-color: var(--danger-bdr);  color: var(--danger); }
+    .txn-icon.add_funds { background: var(--success-bg); border-color: var(--success-bdr); color: var(--success); }
+    .txn-icon.escrow_hold   { background: var(--warning-bg); border-color: var(--warning-bdr); color: var(--warning); }
+    .txn-icon.escrow_release { background: var(--success-bg); border-color: var(--success-bdr); color: var(--success); }
+
+    .txn-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .txn-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      border: 1px solid;
+      margin-bottom: 6px;
+    }
+    .txn-type-badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .type-credit       { color: var(--success); border-color: var(--success-bdr); background: var(--success-bg); }
+    .type-refund        { color: var(--info);    border-color: var(--info-bdr);    background: var(--info-bg); }
+    .type-debit         { color: var(--danger);  border-color: var(--danger-bdr);  background: var(--danger-bg); }
+    .type-add_funds     { color: var(--success); border-color: var(--success-bdr); background: var(--success-bg); }
+    .type-escrow_hold   { color: var(--warning); border-color: var(--warning-bdr); background: var(--warning-bg); }
+    .type-escrow_release { color: var(--success); border-color: var(--success-bdr); background: var(--success-bg); }
+
+    .txn-desc {
+      font-size: 13px;
+      color: var(--cream-dim);
+      font-weight: 300;
+      line-height: 1.5;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .txn-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .txn-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .txn-amount.positive { color: var(--success); }
+    .txn-amount.negative { color: var(--danger); }
+
+    .txn-meta {
+      font-size: 11px;
+      color: var(--cream-dim);
+      letter-spacing: 0.06em;
+      font-weight: 300;
+    }
+
+    .txn-balance-after {
+      font-size: 11px;
+      color: var(--cream-dim);
+      letter-spacing: 0.06em;
+      font-weight: 300;
+      margin-top: 2px;
+    }
+
+    /* ── ORDER REF ── */
+    .txn-order-ref {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      padding: 2px 8px;
+      background: var(--glass-md);
+      border: 1px solid var(--border-lt);
+      border-radius: 2px;
+      font-size: 10px;
+      color: var(--cream-dim);
+      letter-spacing: 0.06em;
+    }
+    .txn-order-ref strong {
+      color: var(--cream);
+      font-weight: 500;
     }
 
     /* ── EMPTY STATE ── */
@@ -350,218 +604,6 @@
       margin-bottom: 32px;
     }
 
-    /* ── BUTTONS ── */
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 32px;
-      background: var(--copper);
-      color: var(--ink);
-      text-decoration: none;
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-weight: 600;
-      font-family: 'Jost', sans-serif;
-      border-radius: var(--radius);
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.15s;
-    }
-    .btn-primary:hover { background: var(--copper-lt); transform: translateY(-1px); }
-
-    .btn-ghost {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: 1px solid var(--border-lt);
-      color: var(--cream-dim);
-      font-family: 'Jost', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 8px 16px;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
-      text-decoration: none;
-    }
-    .btn-ghost:hover { border-color: var(--border); color: var(--cream); }
-
-    .btn-approve {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--success-bg);
-      border: 1px solid var(--success-bdr);
-      color: var(--success);
-      font-family: 'Jost', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 10px 22px;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    .btn-approve:hover {
-      background: rgba(125,232,160,0.16);
-      box-shadow: 0 4px 16px rgba(125,232,160,0.15);
-    }
-
-    .btn-reject {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--danger-bg);
-      border: 1px solid var(--danger-bdr);
-      color: var(--danger);
-      font-family: 'Jost', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 10px 22px;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.2s, box-shadow 0.2s;
-    }
-    .btn-reject:hover {
-      background: rgba(232,125,125,0.16);
-      box-shadow: 0 4px 16px rgba(232,125,125,0.15);
-    }
-
-    /* ── NOTIFICATION CARDS ── */
-    .notif-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .notif-card {
-      border: 1px solid var(--border-lt);
-      border-radius: var(--radius);
-      background: var(--glass);
-      overflow: hidden;
-      transition: border-color 0.25s, background 0.25s, transform 0.2s;
-      animation: slideUp 0.35s ease both;
-    }
-    .notif-card:hover {
-      border-color: var(--border);
-      transform: translateY(-1px);
-    }
-    .notif-card.unread {
-      border-left: 3px solid var(--copper);
-      background: rgba(200,121,65,0.03);
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .notif-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 24px 14px;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .notif-type-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 10px;
-      border-radius: 2px;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-weight: 600;
-      border: 1px solid;
-    }
-    .notif-type-badge::before {
-      content: '';
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .type-order_placed     { color: var(--info);    border-color: var(--info-bdr);    background: var(--info-bg); }
-    .type-approval_request { color: var(--warning);  border-color: var(--warning-bdr); background: var(--warning-bg); }
-    .type-order_confirmed  { color: var(--success);  border-color: var(--success-bdr); background: var(--success-bg); }
-    .type-order_rejected   { color: var(--danger);   border-color: var(--danger-bdr);  background: var(--danger-bg); }
-    .type-item_approved    { color: var(--success);  border-color: var(--success-bdr); background: var(--success-bg); }
-    .type-item_rejected    { color: var(--danger);   border-color: var(--danger-bdr);  background: var(--danger-bg); }
-
-    .notif-time {
-      font-size: 11px;
-      color: var(--cream-dim);
-      letter-spacing: 0.06em;
-      font-weight: 300;
-    }
-
-    .notif-body {
-      padding: 0 24px 16px;
-    }
-
-    .notif-message {
-      font-size: 14px;
-      color: var(--cream);
-      font-weight: 300;
-      line-height: 1.7;
-      letter-spacing: 0.02em;
-    }
-
-    .notif-order-ref {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 10px;
-      padding: 4px 12px;
-      background: var(--glass-md);
-      border: 1px solid var(--border-lt);
-      border-radius: 2px;
-      font-size: 11px;
-      color: var(--cream-dim);
-      letter-spacing: 0.06em;
-    }
-    .notif-order-ref strong {
-      color: var(--cream);
-      font-weight: 500;
-    }
-
-    .notif-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 24px;
-      background: rgba(0,0,0,0.08);
-      border-top: 1px solid var(--border-lt);
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .notif-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .notif-read-indicator {
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--cream-dim);
-      font-weight: 300;
-    }
-    .notif-read-indicator.is-unread { color: var(--copper); font-weight: 500; }
-
     /* ── MESSAGES ── */
     .messages-wrap {
       max-width: 1100px;
@@ -586,15 +628,16 @@
       .content { padding: 32px 20px 60px; }
       .messages-wrap { padding: 0 20px; }
       .summary-bar { grid-template-columns: 1fr; }
-      .notif-header { flex-direction: column; align-items: flex-start; }
-      .notif-footer { flex-direction: column; align-items: flex-start; }
+      .balance-hero { padding: 32px 20px; }
+      .txn-row { flex-direction: column; align-items: flex-start; }
+      .txn-right { text-align: left; }
     }
   </style>
 </head>
 <body>
 
   <!-- NAVBAR -->
-  <nav class="navbar" id="navbar-notifications">
+  <nav class="navbar" id="navbar-wallet">
     <a href="{% url 'home' %}" class="nav-brand">
       <div class="nav-mark"><span></span></div>
       <span class="nav-name">StockFlow</span>
@@ -604,11 +647,11 @@
       <li><a href="{% url 'cart' %}">My Cart</a></li>
       <li><a href="{% url 'order_history' %}">My Orders</a></li>
       <li><a href="{% url 'add_address' %}">Add Address</a></li>
-      <li><a href="{% url 'wallet' %}">Wallet</a></li>
+      <li><a href="{% url 'wallet' %}" class="active">Wallet</a></li>
       <li><a href="{% url 'profile' %}">Profile</a></li>
-      <li><a href="{% url 'notifications' %}" class="nav-notif-link active" style="display:inline-flex;align-items:center;">
+      <li><a href="{% url 'notifications' %}" class="nav-notif-link" style="display:inline-flex;align-items:center;">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        {% if unread_count %}<span class="nav-notif-badge">{{ unread_count }}</span>{% endif %}
+        {% if unread_notification_count %}<span class="nav-notif-badge">{{ unread_notification_count }}</span>{% endif %}
       </a></li>
       <li>
         <span class="nav-user-badge">
@@ -640,133 +683,126 @@
           <div class="breadcrumb">
             <a href="{% url 'home' %}">Home</a>
             <span>›</span>
-            Notifications
+            Wallet
           </div>
-          <h1 class="page-title" id="notifications-heading">
-            {% if user_type == 'seller' %}Approval <em>Requests</em>{% else %}Order <em>Notifications</em>{% endif %}
+          <h1 class="page-title" id="wallet-heading">
+            My <em>Wallet</em>
           </h1>
           <p class="page-subtitle">
-            {% if user_type == 'seller' %}
-              Review and respond to buyer order requests for your products.
+            {% if user_type == 'buyer' %}
+              Manage your funds, view transaction history, and track order payments.
             {% else %}
-              Track the status of your orders and seller responses.
+              View your earnings, transaction history, and order payment credits.
             {% endif %}
           </p>
         </div>
-        {% if total_count > 0 %}
-          <div class="header-actions">
-            {% if unread_count > 0 %}
-              <form method="post" action="{% url 'mark_all_notifications_read' %}" id="form-mark-all-read">
-                {% csrf_token %}
-                <button type="submit" class="btn-ghost">✓ Mark All Read</button>
-              </form>
-            {% endif %}
-          </div>
-        {% endif %}
       </div>
     </div>
 
     <!-- MAIN CONTENT -->
     <div class="content">
 
-      <!-- SUMMARY BAR -->
-      <div class="summary-bar" id="notif-summary-bar">
-        <div class="summary-stat">
-          <span class="summary-stat-label">Total Notifications</span>
-          <span class="summary-stat-value">{{ total_count }}</span>
+      <!-- BALANCE HERO -->
+      <div class="balance-hero" id="wallet-balance-hero">
+        <div class="balance-label">Available Balance</div>
+        <div class="balance-amount">
+          <span class="currency">₹</span>{{ wallet.balance }}
         </div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">Unread</span>
-          <span class="summary-stat-value copper">{{ unread_count }}</span>
-        </div>
-        <div class="summary-stat">
-          <span class="summary-stat-label">Read</span>
-          <span class="summary-stat-value" id="read-count">{{ read_count }}</span>
+        <div class="balance-actions">
+          <form method="post" action="{% url 'add_funds' %}" id="form-add-funds">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">+ Add ₹10,000</button>
+          </form>
         </div>
       </div>
+
+      <!-- SUMMARY BAR -->
+      <div class="summary-bar" id="wallet-summary-bar">
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total Credited</span>
+          <span class="summary-stat-value green">₹{{ total_credits }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total Debited</span>
+          <span class="summary-stat-value red">₹{{ total_debits }}</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Transactions</span>
+          <span class="summary-stat-value">{{ txn_count }}</span>
+        </div>
+      </div>
+
+      <!-- SECTION TITLE -->
+      <h2 class="section-title">Transaction <em>History</em></h2>
 
       <!-- FILTER TABS -->
-      <div class="filter-bar" id="notif-filter-bar">
+      <div class="filter-bar" id="wallet-filter-bar">
         <button class="filter-btn active" data-filter="all">
-          All <span class="filter-count">{{ total_count }}</span>
+          All <span class="filter-count">{{ txn_count }}</span>
         </button>
-        <button class="filter-btn" data-filter="unread">
-          Unread <span class="filter-count">{{ unread_count }}</span>
+        <button class="filter-btn" data-filter="incoming">
+          Credits & Refunds
         </button>
-        {% if user_type == 'seller' %}
-        <button class="filter-btn" data-filter="approval_request">
-          Pending Approval
+        <button class="filter-btn" data-filter="outgoing">
+          Debits
         </button>
-        {% endif %}
-        <button class="filter-btn" data-filter="order_confirmed">
-          Confirmed
-        </button>
-        <button class="filter-btn" data-filter="order_rejected">
-          Rejected
+        <button class="filter-btn" data-filter="add_funds">
+          Add Funds
         </button>
       </div>
 
-      <!-- NOTIFICATIONS LIST -->
-      {% if notifications %}
-        <div class="notif-list" id="notif-list">
-          {% for notif in notifications %}
-            <div class="notif-card {% if not notif.is_read %}unread{% endif %}"
-                 data-type="{{ notif.notification_type }}"
-                 data-read="{{ notif.is_read|yesno:'true,false' }}"
-                 id="notif-card-{{ notif.id }}">
+      <!-- TRANSACTION LIST -->
+      {% if transactions %}
+        <div class="txn-list" id="txn-list">
+          {% for txn in transactions %}
+            <div class="txn-card"
+                 data-type="{{ txn.transaction_type }}"
+                 id="txn-card-{{ txn.id }}">
+              <div class="txn-row">
 
-              <div class="notif-header">
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                  <!-- Type Badge -->
-                  <span class="notif-type-badge type-{{ notif.notification_type }}">
-                    {% if notif.notification_type == 'order_placed' %}Order Placed
-                    {% elif notif.notification_type == 'approval_request' %}Approval Needed
-                    {% elif notif.notification_type == 'order_confirmed' %}Confirmed
-                    {% elif notif.notification_type == 'order_rejected' %}Rejected
-                    {% elif notif.notification_type == 'item_approved' %}Item Approved
-                    {% elif notif.notification_type == 'item_rejected' %}Item Rejected
-                    {% else %}{{ notif.notification_type }}
-                    {% endif %}
-                  </span>
-                  {% if notif.order %}
-                    <span class="notif-order-ref">
-                      Order <strong>#{{ notif.order.id }}</strong>
-                      {% if notif.order.total_amount %}· ₹{{ notif.order.total_amount }}{% endif %}
+                <div class="txn-left">
+                  <!-- Icon -->
+                  <div class="txn-icon {{ txn.transaction_type }}">
+                    {% if txn.transaction_type == 'credit' %}💰
+                    {% elif txn.transaction_type == 'refund' %}↩️
+                    {% elif txn.transaction_type == 'debit' %}💸
+                    {% elif txn.transaction_type == 'add_funds' %}➕
+                    {% elif txn.transaction_type == 'escrow_hold' %}🔒
+                    {% elif txn.transaction_type == 'escrow_release' %}🔓
+                    {% else %}📋{% endif %}
+                  </div>
+
+                  <!-- Details -->
+                  <div class="txn-details">
+                    <span class="txn-type-badge type-{{ txn.transaction_type }}">
+                      {% if txn.transaction_type == 'credit' %}Credit
+                      {% elif txn.transaction_type == 'refund' %}Refund
+                      {% elif txn.transaction_type == 'debit' %}Debit
+                      {% elif txn.transaction_type == 'add_funds' %}Add Funds
+                      {% elif txn.transaction_type == 'escrow_hold' %}Escrow Hold
+                      {% elif txn.transaction_type == 'escrow_release' %}Escrow Release
+                      {% else %}{{ txn.transaction_type }}{% endif %}
                     </span>
-                  {% endif %}
+                    <div class="txn-desc">{{ txn.description }}</div>
+                    {% if txn.order %}
+                      <span class="txn-order-ref">
+                        Order <strong>#{{ txn.order.id }}</strong>
+                      </span>
+                    {% endif %}
+                  </div>
                 </div>
-                <span class="notif-time">{{ notif.created_at|timesince }} ago</span>
-              </div>
 
-              <div class="notif-body">
-                <p class="notif-message">{{ notif.message }}</p>
-              </div>
-
-              <div class="notif-footer">
-                <div class="notif-actions">
-                  {% if user_type == 'seller' and notif.notification_type == 'approval_request' and notif.order_item and notif.order_item.status == 'Pending' %}
-                    <!-- Seller can approve or reject -->
-                    <form method="post" action="{% url 'seller_approve_item' notif.order_item.id %}" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn-approve" id="btn-approve-{{ notif.order_item.id }}">✓ Approve</button>
-                    </form>
-                    <form method="post" action="{% url 'seller_reject_item' notif.order_item.id %}" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn-reject" id="btn-reject-{{ notif.order_item.id }}"
-                              onclick="return confirm('Rejecting this item will cancel the ENTIRE order. Proceed?')">
-                        ✕ Reject
-                      </button>
-                    </form>
-                  {% elif not notif.is_read %}
-                    <form method="post" action="{% url 'mark_notification_read' notif.id %}" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn-ghost" id="btn-read-{{ notif.id }}">Mark Read</button>
-                    </form>
+                <!-- Amount & Meta -->
+                <div class="txn-right">
+                  {% if txn.transaction_type == 'debit' %}
+                    <div class="txn-amount negative">− ₹{{ txn.amount }}</div>
+                  {% else %}
+                    <div class="txn-amount positive">+ ₹{{ txn.amount }}</div>
                   {% endif %}
+                  <div class="txn-meta">{{ txn.created_at|timesince }} ago</div>
+                  <div class="txn-balance-after">Balance: ₹{{ txn.balance_after }}</div>
                 </div>
-                <span class="notif-read-indicator {% if not notif.is_read %}is-unread{% endif %}">
-                  {% if notif.is_read %}Read{% else %}Unread{% endif %}
-                </span>
+
               </div>
             </div>
           {% endfor %}
@@ -774,19 +810,22 @@
 
       {% else %}
         <!-- EMPTY STATE -->
-        <div class="empty-state" id="notif-empty-state">
+        <div class="empty-state" id="wallet-empty-state">
           <div class="empty-icon">
-            <div class="empty-icon-inner">🔔</div>
+            <div class="empty-icon-inner">💰</div>
           </div>
-          <h2 class="empty-title">No notifications yet</h2>
+          <h2 class="empty-title">No transactions yet</h2>
           <p class="empty-text">
-            {% if user_type == 'seller' %}
-              When a buyer places an order for your products, you'll be notified here.
+            {% if user_type == 'buyer' %}
+              Add funds to your wallet and place an order to see your transactions here.
             {% else %}
-              When you place an order, you'll see status updates here.
+              When a buyer's order is confirmed, your earnings will appear here.
             {% endif %}
           </p>
-          <a href="{% url 'items' %}" class="btn-primary">Browse Marketplace</a>
+          <form method="post" action="{% url 'add_funds' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary">+ Add ₹10,000</button>
+          </form>
         </div>
       {% endif %}
 
@@ -797,11 +836,10 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const filterBtns = document.querySelectorAll('.filter-btn');
-      const cards = document.querySelectorAll('.notif-card');
+      const cards = document.querySelectorAll('.txn-card');
 
       filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-          // Update active state
           filterBtns.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
 
@@ -809,15 +847,16 @@
 
           cards.forEach(card => {
             const type = card.dataset.type;
-            const isRead = card.dataset.read === 'true';
-            let show = true;
+            let show = false;
 
-            if (filter === 'unread') {
-              show = !isRead;
-            } else if (filter === 'all') {
+            if (filter === 'all') {
               show = true;
-            } else {
-              show = type === filter;
+            } else if (filter === 'incoming') {
+              show = ['credit', 'refund'].includes(type);
+            } else if (filter === 'outgoing') {
+              show = type === 'debit';
+            } else if (filter === 'add_funds') {
+              show = type === 'add_funds';
             }
 
             card.style.display = show ? '' : 'none';
