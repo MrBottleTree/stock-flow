@@ -581,16 +581,7 @@
           </div>
           <div class="summary-stat">
             <span class="summary-stat-label">Total Spent</span>
-            <span class="summary-stat-value copper">
-              ₹{% with total=0 %}
-                {% for order in orders %}
-                  {% if forloop.last %}{{ order.total_amount }}{% endif %}
-                {% endfor %}
-              {% endwith %}
-              <!-- Django template can't sum easily without a custom filter;
-                   use a templatetag or pass 'total_spent' from the view context -->
-              {{ total_spent|default:"—" }}
-            </span>
+            <span class="summary-stat-value copper">₹{{ total_spent }}</span>
           </div>
           <div class="summary-stat">
             <span class="summary-stat-label">Last Order</span>
