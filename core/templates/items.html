@@ -298,10 +298,103 @@
         grid-template-columns: 1fr;
       }
     }
+    /* ── Premium Navbar ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 0 48px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(14,26,16,0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-lt);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 14px; text-decoration: none;
+    }
+    .nav-mark {
+      width: 32px; height: 32px; border: 2px solid var(--copper);
+      transform: rotate(45deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .nav-mark span { display: block; width: 10px; height: 10px; background: var(--copper); }
+    .nav-name {
+      font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--cream);
+    }
+    .nav-links { list-style: none; display: flex; align-items: center; gap: 28px; }
+    .nav-links a {
+      color: var(--cream-dim); text-decoration: none; font-size: 12px;
+      letter-spacing: 0.08em; text-transform: uppercase; font-weight: 400;
+      transition: color 0.2s; position: relative;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -3px; left: 0;
+      width: 0; height: 1px; background: var(--copper); transition: width 0.25s ease;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a:hover::after { width: 100%; }
+    .nav-links a.active { color: var(--copper-lt); }
+    .nav-links a.active::after { width: 100%; }
+    .nav-user-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--cream-dim); letter-spacing: 0.05em;
+    }
+    .nav-user-type {
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--copper); border: 1px solid var(--border); padding: 1px 6px; border-radius: 2px;
+    }
+    .nav-signout {
+      border: 1px solid var(--border) !important; padding: 6px 16px !important; border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s !important;
+    }
+    .nav-signout::after { display: none !important; }
+    .nav-signout:hover { border-color: rgba(245,240,232,0.4) !important; color: var(--cream) !important; }
+    .nav-notif-link { position: relative; display: flex; align-items: center; gap: 6px; }
+    .nav-notif-badge {
+      position: absolute; top: -8px; right: -12px;
+      min-width: 18px; height: 18px; background: var(--copper); color: var(--ink);
+      font-size: 10px; font-weight: 600; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 4px; line-height: 1; letter-spacing: 0; text-transform: none;
+    }
   </style>
 </head>
 <body>
-  <main class="shell">
+  <!-- PREMIUM NAVBAR -->
+  <nav class="navbar">
+    <a href="{% url 'home' %}" class="nav-brand">
+      <div class="nav-mark"><span></span></div>
+      <span class="nav-name">StockFlow</span>
+    </a>
+    <ul class="nav-links">
+      <li>
+        <span class="nav-user-badge">
+          <span>{% if user_type == 'buyer' %}🛍{% else %}📦{% endif %}</span>
+          {{ user_name }}
+          <span class="nav-user-type">{{ user_type }}</span>
+        </span>
+      </li>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'items' %}" class="active">Item List</a></li>
+      {% if user_type == 'seller' %}
+        <li><a href="{% url 'inventory' %}">My Inventory</a></li>
+      {% elif user_type == 'buyer' %}
+        <li><a href="{% url 'cart' %}">🛒 Cart</a></li>
+        <li><a href="{% url 'order_history' %}">Orders</a></li>
+      {% endif %}
+      <li><a href="{% url 'notifications' %}" class="nav-notif-link">
+        🔔 Notifications
+        {% if unread_notification_count %}<span class="nav-notif-badge">{{ unread_notification_count }}</span>{% endif %}
+      </a></li>
+      <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
+    </ul>
+  </nav>
+
+  <main class="shell" style="padding-top: 110px;">
     <header class="header">
       <div>
         <span class="eyebrow">Items Page</span>
@@ -309,20 +402,10 @@
         <p class="subtitle">{{ page_subtitle|default:"Welcome to the marketplace." }}</p>
       </div>
       <div class="actions">
-        <div style="display: flex; gap: 4px; border-right: 1px solid rgba(245,240,232,0.22); padding-right: 14px; margin-right: 4px;">
+        <div style="display: flex; gap: 4px;">
           <a class="btn {% if not is_sold_out_tab %}primary{% endif %}" href="{% url 'items' %}">All Items</a>
           <a class="btn {% if is_sold_out_tab %}primary{% endif %}" href="{% url 'sold_out_items' %}">Sold Out Items</a>
         </div>
-        {% if user_type == 'seller' %}
-          <a class="btn primary" href="{% url 'inventory' %}">My Inventory</a>
-          <a class="btn" href="{% url 'add_address' %}">Add Address</a>
-        {% elif user_type == 'buyer' %}
-          <a class="btn primary" href="{% url 'cart' %}">🛒 My Cart</a>
-          <a class="btn" href="{% url 'order_history' %}">My Orders</a>
-          <a class="btn" href="{% url 'add_address' %}">Add Address</a>
-        {% endif %}
-        <a class="btn" href="{% url 'home' %}">Home</a>
-        <a class="btn" href="{% url 'signout_page' %}">Sign Out</a>
       </div>
     </header>
 

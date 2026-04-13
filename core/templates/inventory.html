@@ -382,6 +382,10 @@
     <nav class="nav-actions">
       <a class="nav-link" href="{% url 'items' %}">Item List</a>
       <a class="nav-link primary" href="{% url 'inventory' %}">My Inventory</a>
+      <a class="nav-link" href="{% url 'notifications' %}" style="position:relative;">
+        🔔 Notifications
+        {% if unread_notification_count %}<span style="position:absolute; top:-6px; right:-8px; min-width:16px; height:16px; background:var(--copper); color:var(--ink); font-size:9px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 3px; line-height:1;">{{ unread_notification_count }}</span>{% endif %}
+      </a>
       <a class="nav-link" href="{% url 'add_address' %}">Add Address</a>
       <a class="nav-link" href="{% url 'signout_page' %}">Sign Out</a>
     </nav>

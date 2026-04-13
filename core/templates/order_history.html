@@ -389,10 +389,13 @@
     }
 
     .status-placed     { color: #7db3e8; border-color: rgba(125,179,232,0.3); background: rgba(125,179,232,0.08); }
+    .status-pending    { color: #e8c47d; border-color: rgba(232,196,125,0.3); background: rgba(232,196,125,0.08); }
     .status-processing { color: #e8c47d; border-color: rgba(232,196,125,0.3); background: rgba(232,196,125,0.08); }
+    .status-confirmed  { color: #7de8a0; border-color: rgba(125,232,160,0.3); background: rgba(125,232,160,0.08); }
     .status-shipped    { color: var(--copper-lt); border-color: var(--border); background: var(--copper-glow); }
     .status-delivered  { color: #7de8a0; border-color: rgba(125,232,160,0.3); background: rgba(125,232,160,0.08); }
     .status-cancelled  { color: #e87d7d; border-color: rgba(232,125,125,0.3); background: rgba(232,125,125,0.08); }
+    .status-rejected   { color: #e87d7d; border-color: rgba(232,125,125,0.3); background: rgba(232,125,125,0.08); }
     .status-default    { color: var(--cream-dim); border-color: var(--border-lt); background: var(--glass); }
 
     /* Order body — items table */
@@ -615,6 +618,10 @@
                   {% with status=order.status|lower %}
                     {% if status == "placed" %}
                       <span class="status-badge status-placed">{{ order.status }}</span>
+                    {% elif status == "pending" %}
+                      <span class="status-badge status-pending">{{ order.status }}</span>
+                    {% elif status == "confirmed" %}
+                      <span class="status-badge status-confirmed">{{ order.status }}</span>
                     {% elif status == "processing" %}
                       <span class="status-badge status-processing">{{ order.status }}</span>
                     {% elif status == "shipped" %}
@@ -623,6 +630,8 @@
                       <span class="status-badge status-delivered">{{ order.status }}</span>
                     {% elif status == "cancelled" %}
                       <span class="status-badge status-cancelled">{{ order.status }}</span>
+                    {% elif status == "rejected" %}
+                      <span class="status-badge status-rejected">{{ order.status }}</span>
                     {% else %}
                       <span class="status-badge status-default">{{ order.status }}</span>
                     {% endif %}

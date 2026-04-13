@@ -499,6 +499,10 @@
           {% elif user_type == 'seller' %}
             <a href="{% url 'inventory' %}" class="quick-nav-link">My Inventory</a>
           {% endif %}
+          <a href="{% url 'notifications' %}" class="quick-nav-link" style="position:relative;">
+            🔔 Notifications
+            {% if unread_notification_count %}<span style="position:absolute; top:-6px; right:-6px; min-width:16px; height:16px; background:var(--copper); color:var(--ink); font-size:9px; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 3px; line-height:1;">{{ unread_notification_count }}</span>{% endif %}
+          </a>
           <a href="{% url 'signout_page' %}" class="quick-nav-link quick-nav-signout">Sign Out</a>
         </div>
 

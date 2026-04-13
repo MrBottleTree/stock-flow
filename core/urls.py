@@ -34,4 +34,11 @@ path('addresses/<int:address_id>/default/',   views.set_default_address, name='s
     path('cart/remove/<int:product_id>/',  views.cart_remove, name='cart_remove'),
     path('cart/update/<int:product_id>/',  views.cart_update, name='cart_update'),
     path('checkout/',                      views.checkout,    name='checkout'),
+
+    # Notifications & Approval Workflow
+    path('notifications/',                              views.notifications,              name='notifications'),
+    path('notifications/mark-all-read/',                views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/<int:notification_id>/read/',   views.mark_notification_read,      name='mark_notification_read'),
+    path('order-item/<int:item_id>/approve/',           views.seller_approve_item,         name='seller_approve_item'),
+    path('order-item/<int:item_id>/reject/',            views.seller_reject_item,          name='seller_reject_item'),
 ]
