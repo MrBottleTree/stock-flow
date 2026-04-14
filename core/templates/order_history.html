@@ -1,36 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Orders — StockFlow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
 
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --forest:      #1a2e1f;
-      --forest-mid:  #243328;
-      --forest-lt:   #2e4035;
-      --forest-dk:   #0e1a10;
-      --copper:      #c87941;
-      --copper-lt:   #e09060;
-      --copper-glow: rgba(200,121,65,0.25);
-      --cream:       #f5f0e8;
-      --cream-dim:   #d9d0bc;
-      --ink:         #0e1a10;
-      --glass:       rgba(255,255,255,0.04);
-      --glass-md:    rgba(255,255,255,0.06);
-      --border:      rgba(200,121,65,0.22);
-      --border-lt:   rgba(200,121,65,0.10);
-      --shadow:      0 24px 64px rgba(0,0,0,0.45);
-      --radius:      2px;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    html { scroll-behavior: smooth; }
+    :root {
+      --forest: #1a2e1f;
+      --forest-mid: #243328;
+      --forest-lt: #2e4035;
+      --forest-dk: #0e1a10;
+      --copper: #c87941;
+      --copper-lt: #e09060;
+      --copper-glow: rgba(200, 121, 65, 0.25);
+      --cream: #f5f0e8;
+      --cream-dim: #d9d0bc;
+      --ink: #0e1a10;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-md: rgba(255, 255, 255, 0.06);
+      --border: rgba(200, 121, 65, 0.22);
+      --border-lt: rgba(200, 121, 65, 0.10);
+      --shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+      --radius: 2px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       font-family: 'Jost', sans-serif;
@@ -54,14 +65,17 @@
     /* ── NAVIGATION ── */
     .navbar {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       z-index: 100;
-      padding: 0 48px;
-      height: 72px;
+      padding: 12px 48px;
+      min-height: 72px;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      background: rgba(14,26,16,0.7);
+      background: rgba(14, 26, 16, 0.7);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border-lt);
@@ -73,8 +87,10 @@
       gap: 14px;
       text-decoration: none;
     }
+
     .nav-mark {
-      width: 32px; height: 32px;
+      width: 32px;
+      height: 32px;
       border: 2px solid var(--copper);
       transform: rotate(45deg);
       display: flex;
@@ -82,11 +98,23 @@
       justify-content: center;
       flex-shrink: 0;
     }
+
     .nav-mark span {
       display: block;
-      width: 10px; height: 10px;
+      width: 10px;
+      height: 10px;
+
+      .nav-links a.active {
+        color: var(--copper-lt);
+      }
+
+      .nav-links a.active::after {
+        width: 100%;
+      }
+
       background: var(--copper);
     }
+
     .nav-name {
       font-family: 'Cormorant Garamond', serif;
       font-size: 20px;
@@ -100,8 +128,10 @@
       list-style: none;
       display: flex;
       align-items: center;
-      gap: 36px;
+      gap: 12px 24px;
+      flex-wrap: wrap;
     }
+
     .nav-links a {
       color: var(--cream-dim);
       text-decoration: none;
@@ -112,42 +142,65 @@
       transition: color 0.2s;
       position: relative;
     }
+
     .nav-links a::after {
       content: '';
       position: absolute;
-      bottom: -3px; left: 0;
-      width: 0; height: 1px;
+      bottom: -3px;
+      left: 0;
+      width: 0;
+      height: 1px;
       background: var(--copper);
       transition: width 0.25s ease;
     }
-    .nav-links a:hover { color: var(--cream); }
-    .nav-links a:hover::after { width: 100%; }
+
+    .nav-links a:hover {
+      color: var(--cream);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
 
     .nav-user-badge {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      color: var(--cream-dim);
-      letter-spacing: 0.05em;
+      padding: 6px 14px;
+      background: rgba(200, 121, 65, 0.1);
+      border: 1px solid rgba(200, 121, 65, 0.22);
+      border-radius: 2px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--copper);
+      font-weight: 500;
     }
+
     .nav-user-type {
-      font-size: 10px;
+      font-size: 9px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--copper);
-      border: 1px solid var(--border);
-      padding: 1px 6px;
+      color: var(--cream-dim);
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.06);
       border-radius: 2px;
     }
+
     .nav-signout {
       border: 1px solid var(--border) !important;
       padding: 6px 16px !important;
       border-radius: 2px;
       transition: border-color 0.2s, color 0.2s !important;
     }
-    .nav-signout::after { display: none !important; }
-    .nav-signout:hover { border-color: rgba(245,240,232,0.4) !important; color: var(--cream) !important; }
+
+    .nav-signout::after {
+      display: none !important;
+    }
+
+    .nav-signout:hover {
+      border-color: rgba(245, 240, 232, 0.4) !important;
+      color: var(--cream) !important;
+    }
 
     /* ── PAGE LAYOUT ── */
     .page-wrapper {
@@ -160,7 +213,7 @@
     .page-header {
       padding: 64px 48px 40px;
       border-bottom: 1px solid var(--border-lt);
-      background: linear-gradient(180deg, rgba(14,26,16,0.4) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(14, 26, 16, 0.4) 0%, transparent 100%);
     }
 
     .page-header-inner {
@@ -178,9 +231,20 @@
       align-items: center;
       gap: 8px;
     }
-    .breadcrumb a { color: var(--cream-dim); text-decoration: none; transition: color 0.2s; }
-    .breadcrumb a:hover { color: var(--cream); }
-    .breadcrumb span { color: var(--border); }
+
+    .breadcrumb a {
+      color: var(--cream-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .breadcrumb a:hover {
+      color: var(--cream);
+    }
+
+    .breadcrumb span {
+      color: var(--border);
+    }
 
     .page-title {
       font-family: 'Cormorant Garamond', serif;
@@ -191,6 +255,7 @@
       line-height: 1.1;
       margin-bottom: 8px;
     }
+
     .page-title em {
       font-style: italic;
       color: var(--copper-lt);
@@ -221,6 +286,7 @@
       overflow: hidden;
       margin-bottom: 48px;
     }
+
     .summary-stat {
       background: var(--forest-mid);
       padding: 24px 28px;
@@ -228,6 +294,7 @@
       flex-direction: column;
       gap: 4px;
     }
+
     .summary-stat-label {
       font-size: 11px;
       letter-spacing: 0.12em;
@@ -235,6 +302,7 @@
       color: var(--cream-dim);
       font-weight: 400;
     }
+
     .summary-stat-value {
       font-family: 'Cormorant Garamond', serif;
       font-size: 28px;
@@ -242,7 +310,10 @@
       color: var(--cream);
       line-height: 1;
     }
-    .summary-stat-value.copper { color: var(--copper-lt); }
+
+    .summary-stat-value.copper {
+      color: var(--copper-lt);
+    }
 
     /* ── EMPTY STATE ── */
     .empty-state {
@@ -252,8 +323,10 @@
       border-radius: var(--radius);
       background: var(--glass);
     }
+
     .empty-icon {
-      width: 64px; height: 64px;
+      width: 64px;
+      height: 64px;
       border: 1px solid var(--border);
       transform: rotate(45deg);
       margin: 0 auto 32px;
@@ -261,8 +334,10 @@
       align-items: center;
       justify-content: center;
     }
+
     .empty-icon-inner {
-      width: 24px; height: 24px;
+      width: 24px;
+      height: 24px;
       background: var(--forest-lt);
       display: flex;
       align-items: center;
@@ -270,6 +345,7 @@
       transform: rotate(-45deg);
       font-size: 14px;
     }
+
     .empty-title {
       font-family: 'Cormorant Garamond', serif;
       font-size: 28px;
@@ -277,12 +353,14 @@
       color: var(--cream);
       margin-bottom: 12px;
     }
+
     .empty-text {
       font-size: 14px;
       color: var(--cream-dim);
       font-weight: 300;
       margin-bottom: 32px;
     }
+
     .btn-primary {
       display: inline-block;
       padding: 12px 32px;
@@ -296,7 +374,11 @@
       border-radius: var(--radius);
       transition: background 0.2s, transform 0.15s;
     }
-    .btn-primary:hover { background: var(--copper-lt); transform: translateY(-1px); }
+
+    .btn-primary:hover {
+      background: var(--copper-lt);
+      transform: translateY(-1px);
+    }
 
     /* ── ORDER CARDS ── */
     .orders-list {
@@ -312,7 +394,10 @@
       overflow: hidden;
       transition: border-color 0.2s;
     }
-    .order-card:hover { border-color: var(--border); }
+
+    .order-card:hover {
+      border-color: var(--border);
+    }
 
     .order-header {
       display: flex;
@@ -339,6 +424,7 @@
       color: var(--cream);
       letter-spacing: 0.04em;
     }
+
     .order-id span {
       font-size: 13px;
       font-family: 'Jost', sans-serif;
@@ -381,34 +467,84 @@
       font-weight: 500;
       border: 1px solid;
     }
+
     .status-badge::before {
       content: '';
-      width: 6px; height: 6px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: currentColor;
     }
 
-    .status-placed     { color: #7db3e8; border-color: rgba(125,179,232,0.3); background: rgba(125,179,232,0.08); }
-    .status-pending    { color: #e8c47d; border-color: rgba(232,196,125,0.3); background: rgba(232,196,125,0.08); }
-    .status-processing { color: #e8c47d; border-color: rgba(232,196,125,0.3); background: rgba(232,196,125,0.08); }
-    .status-confirmed  { color: #7de8a0; border-color: rgba(125,232,160,0.3); background: rgba(125,232,160,0.08); }
-    .status-shipped    { color: var(--copper-lt); border-color: var(--border); background: var(--copper-glow); }
-    .status-delivered  { color: #7de8a0; border-color: rgba(125,232,160,0.3); background: rgba(125,232,160,0.08); }
-    .status-cancelled  { color: #e87d7d; border-color: rgba(232,125,125,0.3); background: rgba(232,125,125,0.08); }
-    .status-rejected   { color: #e87d7d; border-color: rgba(232,125,125,0.3); background: rgba(232,125,125,0.08); }
-    .status-default    { color: var(--cream-dim); border-color: var(--border-lt); background: var(--glass); }
+    .status-placed {
+      color: #7db3e8;
+      border-color: rgba(125, 179, 232, 0.3);
+      background: rgba(125, 179, 232, 0.08);
+    }
+
+    .status-pending {
+      color: #e8c47d;
+      border-color: rgba(232, 196, 125, 0.3);
+      background: rgba(232, 196, 125, 0.08);
+    }
+
+    .status-processing {
+      color: #e8c47d;
+      border-color: rgba(232, 196, 125, 0.3);
+      background: rgba(232, 196, 125, 0.08);
+    }
+
+    .status-confirmed {
+      color: #7de8a0;
+      border-color: rgba(125, 232, 160, 0.3);
+      background: rgba(125, 232, 160, 0.08);
+    }
+
+    .status-shipped {
+      color: var(--copper-lt);
+      border-color: var(--border);
+      background: var(--copper-glow);
+    }
+
+    .status-delivered {
+      color: #7de8a0;
+      border-color: rgba(125, 232, 160, 0.3);
+      background: rgba(125, 232, 160, 0.08);
+    }
+
+    .status-cancelled {
+      color: #e87d7d;
+      border-color: rgba(232, 125, 125, 0.3);
+      background: rgba(232, 125, 125, 0.08);
+    }
+
+    .status-rejected {
+      color: #e87d7d;
+      border-color: rgba(232, 125, 125, 0.3);
+      background: rgba(232, 125, 125, 0.08);
+    }
+
+    .status-default {
+      color: var(--cream-dim);
+      border-color: var(--border-lt);
+      background: var(--glass);
+    }
 
     /* Order body — items table */
-    .order-body { padding: 0 28px 24px; }
+    .order-body {
+      padding: 0 28px 24px;
+    }
 
     .items-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     .items-table thead tr {
       border-bottom: 1px solid var(--border-lt);
     }
+
     .items-table th {
       font-size: 11px;
       letter-spacing: 0.1em;
@@ -418,13 +554,19 @@
       padding: 8px 0;
       text-align: left;
     }
+
     .items-table th:last-child,
-    .items-table td:last-child { text-align: right; }
+    .items-table td:last-child {
+      text-align: right;
+    }
 
     .items-table tbody tr {
       border-bottom: 1px solid var(--border-lt);
     }
-    .items-table tbody tr:last-child { border-bottom: none; }
+
+    .items-table tbody tr:last-child {
+      border-bottom: none;
+    }
 
     .items-table td {
       padding: 14px 0;
@@ -437,6 +579,7 @@
       font-weight: 400;
       color: var(--cream);
     }
+
     .product-sku {
       font-size: 11px;
       color: var(--cream-dim);
@@ -444,11 +587,17 @@
       letter-spacing: 0.06em;
       margin-top: 2px;
     }
+
     .item-qty {
       color: var(--cream-dim);
       font-size: 13px;
     }
-    .item-price { color: var(--cream-dim); font-size: 13px; }
+
+    .item-price {
+      color: var(--cream-dim);
+      font-size: 13px;
+    }
+
     .item-total {
       color: var(--cream);
       font-weight: 500;
@@ -460,17 +609,19 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 28px;
-      background: rgba(0,0,0,0.12);
+      background: rgba(0, 0, 0, 0.12);
       border-top: 1px solid var(--border-lt);
       flex-wrap: wrap;
       gap: 12px;
     }
+
     .order-address {
       font-size: 12px;
       color: var(--cream-dim);
       font-weight: 300;
       letter-spacing: 0.03em;
     }
+
     .order-address strong {
       font-weight: 500;
       color: var(--cream);
@@ -480,6 +631,7 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
+
     .delivered-date {
       font-size: 12px;
       color: #7de8a0;
@@ -492,6 +644,7 @@
       margin: 24px auto 0;
       padding: 0 48px;
     }
+
     .alert {
       padding: 14px 20px;
       border-radius: var(--radius);
@@ -499,23 +652,58 @@
       border: 1px solid;
       margin-bottom: 12px;
     }
-    .alert-error   { background: rgba(232,125,125,0.08); border-color: rgba(232,125,125,0.3); color: #e87d7d; }
-    .alert-success { background: rgba(125,232,160,0.08); border-color: rgba(125,232,160,0.3); color: #7de8a0; }
+
+    .alert-error {
+      background: rgba(232, 125, 125, 0.08);
+      border-color: rgba(232, 125, 125, 0.3);
+      color: #e87d7d;
+    }
+
+    .alert-success {
+      background: rgba(125, 232, 160, 0.08);
+      border-color: rgba(125, 232, 160, 0.3);
+      color: #7de8a0;
+    }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      .navbar { padding: 0 20px; }
-      .page-header { padding: 48px 20px 32px; }
-      .content { padding: 32px 20px 60px; }
-      .messages-wrap { padding: 0 20px; }
-      .summary-bar { grid-template-columns: 1fr; }
-      .order-header { flex-direction: column; align-items: flex-start; }
-      .order-right { flex-direction: row; }
+      .navbar {
+        padding: 0 20px;
+      }
+
+      .page-header {
+        padding: 48px 20px 32px;
+      }
+
+      .content {
+        padding: 32px 20px 60px;
+      }
+
+      .messages-wrap {
+        padding: 0 20px;
+      }
+
+      .summary-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .order-right {
+        flex-direction: row;
+      }
+
       .items-table th:nth-child(3),
-      .items-table td:nth-child(3) { display: none; }
+      .items-table td:nth-child(3) {
+        display: none;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <!-- NAVBAR -->
@@ -525,31 +713,38 @@
       <span class="nav-name">StockFlow</span>
     </a>
     <ul class="nav-links">
+      <li><a href="{% url 'items' %}">Browse</a></li>
+      <li><a href="{% url 'cart' %}">My Cart</a></li>
+      <li><a href="{% url 'order_history' %}" class="active">My Orders</a></li>
+      <li><a href="{% url 'add_address' %}">Add Address</a></li>
+      <li><a href="{% url 'wallet' %}">Wallet</a></li>
+      <li><a href="{% url 'profile' %}">Profile</a></li>
+      <li><a href="{% url 'notifications' %}" class="nav-notif-link" style="display:inline-flex;align-items:center;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+        </a></li>
       <li>
         <span class="nav-user-badge">
-          <span>🛍</span>
           {{ user_name }}
           <span class="nav-user-type">buyer</span>
         </span>
       </li>
-      <li><a href="{% url 'items' %}">Item List</a></li>
-      <li><a href="{% url 'cart' %}">My Cart</a></li>
-      <li><a href="{% url 'order_history' %}">My Orders</a></li>
-      <li><a href="{% url 'add_address' %}">Add Address</a></li>
-      <li><a href="{% url 'profile' %}">Profile</a></li>
       <li><a href="{% url 'signout_page' %}" class="nav-signout">Sign Out</a></li>
     </ul>
   </nav>
 
   <!-- FLASH MESSAGES -->
   {% if messages %}
-    <div class="messages-wrap" style="margin-top: 96px;">
-      {% for message in messages %}
-        <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
+  <div class="messages-wrap" style="margin-top: 96px;">
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+      {{ message }}
     </div>
+    {% endfor %}
+  </div>
   {% endif %}
 
   <div class="page-wrapper">
@@ -572,131 +767,132 @@
 
       <!-- SUMMARY BAR -->
       {% if orders %}
-        <div class="summary-bar">
-          <div class="summary-stat">
-            <span class="summary-stat-label">Total Orders</span>
-            <span class="summary-stat-value">{{ orders|length }}</span>
-          </div>
-          <div class="summary-stat">
-            <span class="summary-stat-label">Total Spent</span>
-            <span class="summary-stat-value copper">
-              ₹{% with total=0 %}
-                {% for order in orders %}
-                  {% if forloop.last %}{{ order.total_amount }}{% endif %}
-                {% endfor %}
-              {% endwith %}
-              <!-- Django template can't sum easily without a custom filter;
-                   use a templatetag or pass 'total_spent' from the view context -->
-              {{ total_spent|default:"—" }}
-            </span>
-          </div>
-          <div class="summary-stat">
-            <span class="summary-stat-label">Last Order</span>
-            <span class="summary-stat-value" style="font-size:18px;">
-              {{ orders.0.placed_at|date:"d M Y" }}
-            </span>
-          </div>
+      <div class="summary-bar">
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total Orders</span>
+          <span class="summary-stat-value">{{ orders|length }}</span>
         </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Total Spent</span>
+          <span class="summary-stat-value copper">
+            ₹{% with total=0 %}
+            {% for order in orders %}
+            {% if forloop.last %}{{ order.total_amount }}{% endif %}
+            {% endfor %}
+            {% endwith %}
+            <!-- Django template can't sum easily without a custom filter;
+                   use a templatetag or pass 'total_spent' from the view context -->
+            {{ total_spent|default:"—" }}
+          </span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-stat-label">Last Order</span>
+          <span class="summary-stat-value" style="font-size:18px;">
+            {{ orders.0.placed_at|date:"d M Y" }}
+          </span>
+        </div>
+      </div>
       {% endif %}
 
       <!-- ORDERS LIST -->
       {% if orders %}
-        <div class="orders-list">
-          {% for order in orders %}
-            <div class="order-card">
+      <div class="orders-list">
+        {% for order in orders %}
+        <div class="order-card">
 
-              <!-- ORDER HEADER -->
-              <div class="order-header">
-                <div class="order-meta">
-                  <div class="order-id">
-                    Order <span>#{{ order.id }}</span>
-                  </div>
-                  <div class="order-date">{{ order.placed_at|date:"d M Y, g:i A" }}</div>
-                </div>
-                <div class="order-right">
-                  <span class="order-total">₹{{ order.total_amount }}</span>
-                  {% with status=order.status|lower %}
-                    {% if status == "placed" %}
-                      <span class="status-badge status-placed">{{ order.status }}</span>
-                    {% elif status == "pending" %}
-                      <span class="status-badge status-pending">{{ order.status }}</span>
-                    {% elif status == "confirmed" %}
-                      <span class="status-badge status-confirmed">{{ order.status }}</span>
-                    {% elif status == "processing" %}
-                      <span class="status-badge status-processing">{{ order.status }}</span>
-                    {% elif status == "shipped" %}
-                      <span class="status-badge status-shipped">{{ order.status }}</span>
-                    {% elif status == "delivered" %}
-                      <span class="status-badge status-delivered">{{ order.status }}</span>
-                    {% elif status == "cancelled" %}
-                      <span class="status-badge status-cancelled">{{ order.status }}</span>
-                    {% elif status == "rejected" %}
-                      <span class="status-badge status-rejected">{{ order.status }}</span>
-                    {% else %}
-                      <span class="status-badge status-default">{{ order.status }}</span>
-                    {% endif %}
-                  {% endwith %}
-                </div>
+          <!-- ORDER HEADER -->
+          <div class="order-header">
+            <div class="order-meta">
+              <div class="order-id">
+                Order <span>#{{ order.id }}</span>
               </div>
-
-              <!-- ORDER ITEMS -->
-              <div class="order-body">
-                <table class="items-table">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Qty</th>
-                      <th>Unit Price</th>
-                      <th>Line Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for item in order.items.all %}
-                      <tr>
-                        <td>
-                          <div class="product-name">{{ item.product.name }}</div>
-                          <div class="product-sku">SKU: {{ item.product.sku }}</div>
-                        </td>
-                        <td><span class="item-qty">× {{ item.quantity }}</span></td>
-                        <td><span class="item-price">₹{{ item.unit_price }}</span></td>
-                        <td><span class="item-total">₹{{ item.line_total }}</span></td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- ORDER FOOTER -->
-              <div class="order-footer">
-                <div class="order-address">
-                  <strong>Shipped to</strong>
-                  {{ order.address.line1 }}{% if order.address.line2 %}, {{ order.address.line2 }}{% endif %},
-                  {{ order.address.city }}, {{ order.address.state }} {{ order.address.postal_code }},
-                  {{ order.address.country }}
-                </div>
-                {% if order.delivered_at %}
-                  <span class="delivered-date">✓ Delivered {{ order.delivered_at|date:"d M Y" }}</span>
-                {% endif %}
-              </div>
-
+              <div class="order-date">{{ order.placed_at|date:"d M Y, g:i A" }}</div>
             </div>
-          {% endfor %}
+            <div class="order-right">
+              <span class="order-total">₹{{ order.total_amount }}</span>
+              {% with status=order.status|lower %}
+              {% if status == "placed" %}
+              <span class="status-badge status-placed">{{ order.status }}</span>
+              {% elif status == "pending" %}
+              <span class="status-badge status-pending">{{ order.status }}</span>
+              {% elif status == "confirmed" %}
+              <span class="status-badge status-confirmed">{{ order.status }}</span>
+              {% elif status == "processing" %}
+              <span class="status-badge status-processing">{{ order.status }}</span>
+              {% elif status == "shipped" %}
+              <span class="status-badge status-shipped">{{ order.status }}</span>
+              {% elif status == "delivered" %}
+              <span class="status-badge status-delivered">{{ order.status }}</span>
+              {% elif status == "cancelled" %}
+              <span class="status-badge status-cancelled">{{ order.status }}</span>
+              {% elif status == "rejected" %}
+              <span class="status-badge status-rejected">{{ order.status }}</span>
+              {% else %}
+              <span class="status-badge status-default">{{ order.status }}</span>
+              {% endif %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <!-- ORDER ITEMS -->
+          <div class="order-body">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Unit Price</th>
+                  <th>Line Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                  <td>
+                    <div class="product-name">{{ item.product.name }}</div>
+                    <div class="product-sku">SKU: {{ item.product.sku }}</div>
+                  </td>
+                  <td><span class="item-qty">× {{ item.quantity }}</span></td>
+                  <td><span class="item-price">₹{{ item.unit_price }}</span></td>
+                  <td><span class="item-total">₹{{ item.line_total }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ORDER FOOTER -->
+          <div class="order-footer">
+            <div class="order-address">
+              <strong>Shipped to</strong>
+              {{ order.address.line1 }}{% if order.address.line2 %}, {{ order.address.line2 }}{% endif %},
+              {{ order.address.city }}, {{ order.address.state }} {{ order.address.postal_code }},
+              {{ order.address.country }}
+            </div>
+            {% if order.delivered_at %}
+            <span class="delivered-date">✓ Delivered {{ order.delivered_at|date:"d M Y" }}</span>
+            {% endif %}
+          </div>
+
         </div>
+        {% endfor %}
+      </div>
 
       {% else %}
-        <!-- EMPTY STATE -->
-        <div class="empty-state">
-          <div class="empty-icon">
-            <div class="empty-icon-inner">📦</div>
-          </div>
-          <h2 class="empty-title">No orders yet</h2>
-          <p class="empty-text">When you place your first order, it will appear here.</p>
-          <a href="{% url 'items' %}" class="btn-primary">Browse Item List</a>
+      <!-- EMPTY STATE -->
+      <div class="empty-state">
+        <div class="empty-icon">
+          <div class="empty-icon-inner">📦</div>
         </div>
+        <h2 class="empty-title">No orders yet</h2>
+        <p class="empty-text">When you place your first order, it will appear here.</p>
+        <a href="{% url 'items' %}" class="btn-primary">Browse Item List</a>
+      </div>
       {% endif %}
 
     </div>
   </div>
 
 </body>
+
 </html>

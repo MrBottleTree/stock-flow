@@ -180,6 +180,16 @@ def _get_valid_session_user(request):
     return user, user_type
 
 
+def _get_or_create_wallet(user):
+    """Return the user's wallet, creating one if needed."""
+    if user.wallet:
+        return user.wallet
+    wallet = Wallet.objects.create()
+    user.wallet = wallet
+    user.save(update_fields=['wallet'])
+    return wallet
+
+
 def _render_items_page(request, filter_sold_out=False):
     user, user_type = _get_valid_session_user(request)
     if not user:
@@ -316,6 +326,8 @@ def signup(request):
         phone=phone,
         password=make_password(password),
     )
+    # Auto-create wallet for new user
+    _get_or_create_wallet(user)
 
     request.session['user_id'] = user.id
     request.session['user_type'] = user_type
@@ -406,12 +418,14 @@ def signup_page(request):
             if user_model.objects.filter(email=email).exists():
                 messages.error(request, f'An account with this email already exists. Please sign in.')
             else:
-                user_model.objects.create(
+                new_user = user_model.objects.create(
                     name=name,
                     email=email,
                     phone=phone,
                     password=make_password(password),
                 )
+                # Auto-create wallet for new user
+                _get_or_create_wallet(new_user)
                 messages.success(request, 'Account created! Please sign in.')
                 return redirect('signin_page')
 
@@ -639,12 +653,32 @@ def checkout(request):
             # Compute total
             total_amount = sum(ci.product.price * ci.quantity for ci in cart_items)
 
+            # ── WALLET: Debit buyer ──
+            buyer_wallet = _get_or_create_wallet(buyer)
+            if buyer_wallet.balance < total_amount:
+                raise ValueError(
+                    f"Insufficient wallet balance. Your balance is ₹{buyer_wallet.balance} "
+                    f"but the order total is ₹{total_amount}. Please add funds first."
+                )
+            buyer_wallet.balance -= total_amount
+            buyer_wallet.save()
+
             # Create order with Pending status
             order = Order.objects.create(
                 buyer=buyer,
                 address=address,
                 total_amount=total_amount,
                 status='Pending',
+            )
+
+            # Record debit transaction
+            Transaction.objects.create(
+                wallet=buyer_wallet,
+                order=order,
+                transaction_type='debit',
+                amount=total_amount,
+                balance_after=buyer_wallet.balance,
+                description=f"Payment for order #{order.id} (held in escrow until seller approval)",
             )
 
             # Create order items — all start as Pending
@@ -675,6 +709,15 @@ def checkout(request):
                 message=(
                     f"Your order #{order.id} has been placed and is awaiting approval "
                     f"from: {seller_names}. You will be notified once all sellers respond."
+                ),
+            )
+            Notification.objects.create(
+                buyer=buyer,
+                order=order,
+                notification_type='wallet_debited',
+                message=(
+                    f"₹{total_amount} has been debited from your wallet for order #{order.id}. "
+                    f"This amount is held in escrow until all sellers respond."
                 ),
             )
 
@@ -709,7 +752,7 @@ def checkout(request):
 
     messages.success(
         request,
-        f'Order #{order.id} placed! It is pending seller approval.'
+        f'Order #{order.id} placed! ₹{total_amount} debited from your wallet (held in escrow).'
     )
     return redirect('order_history')
 
@@ -881,28 +924,43 @@ def item_detail(request, product_id):
 
 
 def profile(request):
-    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
-        messages.error(request, 'Please sign in as a buyer to view your profile.')
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        messages.error(request, 'Please sign in to view your profile.')
         return redirect('signin_page')
 
-    buyer = Buyer.objects.get(id=request.session['user_id'])
-    orders = (
-        Order.objects
-        .filter(buyer=buyer)
-        .prefetch_related('items__product')
-        .select_related('address')
-        .order_by('-placed_at')
-    )
-    addresses   = Address.objects.filter(buyer=buyer)
-    total_spent = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    if user_type == 'buyer':
+        orders = (
+            Order.objects
+            .filter(buyer=user)
+            .prefetch_related('items__product')
+            .select_related('address')
+            .order_by('-placed_at')
+        )
+        addresses = Address.objects.filter(buyer=user)
+        total_spent = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_earned = 0
+    else:  # seller
+        orders = (
+            Order.objects
+            .filter(items__product__seller=user)
+            .distinct()
+            .prefetch_related('items__product')
+            .select_related('address')
+            .order_by('-placed_at')
+        )
+        addresses = Address.objects.filter(seller=user)
+        total_spent = 0
+        total_earned = OrderItem.objects.filter(product__seller=user, status='Approved').aggregate(total=Sum('line_total'))['total'] or 0
 
     return render(request, 'profile.html', {
         'orders':      orders,
         'addresses':   addresses,
         'total_spent': total_spent,
-        'user_name':   buyer.name,
-        'user_email':  buyer.email,
-        'user_type':   'buyer',
+        'total_earned': total_earned,
+        'user_name':   user.name,
+        'user_email':  user.email,
+        'user_type':   user_type,
         'unread_notification_count': _get_unread_notification_count(request),
     })
 
@@ -1117,7 +1175,7 @@ def seller_approve_item(request, item_id):
         )
 
         # Check if ALL items in this order are now Approved
-        all_items = list(order.items.all())
+        all_items = list(order.items.select_related('product__seller').all())
         all_approved = all(item.status == 'Approved' for item in all_items)
 
         if all_approved:
@@ -1128,6 +1186,35 @@ def seller_approve_item(request, item_id):
             for item in all_items:
                 Inventory.objects.filter(product=item.product).update(
                     quantity=F('quantity') - item.quantity
+                )
+
+            # ── WALLET: Credit each seller their portion ──
+            seller_totals = {}  # seller_id → total amount
+            for item in all_items:
+                sid = item.product.seller_id
+                seller_totals[sid] = seller_totals.get(sid, Decimal('0')) + item.line_total
+
+            for sid, amount in seller_totals.items():
+                seller_obj = Seller.objects.get(id=sid)
+                seller_wallet = _get_or_create_wallet(seller_obj)
+                seller_wallet.balance += amount
+                seller_wallet.save()
+                Transaction.objects.create(
+                    wallet=seller_wallet,
+                    order=order,
+                    transaction_type='credit',
+                    amount=amount,
+                    balance_after=seller_wallet.balance,
+                    description=f"Payment received for order #{order.id} — all sellers approved",
+                )
+                Notification.objects.create(
+                    seller_id=sid,
+                    order=order,
+                    notification_type='wallet_credited',
+                    message=(
+                        f"₹{amount} has been credited to your wallet for order #{order.id}. "
+                        f"All sellers approved — escrow released."
+                    ),
                 )
 
             # Notify buyer of full confirmation
@@ -1181,6 +1268,22 @@ def seller_reject_item(request, item_id):
         # Mark ALL remaining pending items in this order as Rejected
         order.items.filter(status='Pending').update(status='Rejected')
 
+        # ── WALLET: Refund the buyer ──
+        buyer_wallet = _get_or_create_wallet(order.buyer)
+        buyer_wallet.balance += order.total_amount
+        buyer_wallet.save()
+        Transaction.objects.create(
+            wallet=buyer_wallet,
+            order=order,
+            transaction_type='refund',
+            amount=order.total_amount,
+            balance_after=buyer_wallet.balance,
+            description=(
+                f"Refund for rejected order #{order.id} — "
+                f"seller {user.name} declined '{order_item.product.name}'"
+            ),
+        )
+
         # Mark the seller's approval-request notification as read
         Notification.objects.filter(
             seller=user, order_item=order_item, notification_type='approval_request'
@@ -1192,7 +1295,7 @@ def seller_reject_item(request, item_id):
             order=order, notification_type='approval_request', is_read=False
         ).update(is_read=True)
 
-        # Notify the buyer that the order was rejected
+        # Notify the buyer that the order was rejected and refunded
         Notification.objects.create(
             buyer=order.buyer,
             order=order,
@@ -1201,7 +1304,16 @@ def seller_reject_item(request, item_id):
             message=(
                 f"Your order #{order.id} has been rejected because seller "
                 f"{user.name} declined the item '{order_item.product.name}'. "
-                f"The entire order has been cancelled. No inventory was deducted."
+                f"The entire order has been cancelled."
+            ),
+        )
+        Notification.objects.create(
+            buyer=order.buyer,
+            order=order,
+            notification_type='wallet_refunded',
+            message=(
+                f"₹{order.total_amount} has been refunded to your wallet "
+                f"for rejected order #{order.id}."
             ),
         )
 
@@ -1224,7 +1336,7 @@ def seller_reject_item(request, item_id):
 
     messages.success(
         request,
-        f'You rejected "{order_item.product.name}". Order #{order.id} has been cancelled.'
+        f'You rejected "{order_item.product.name}". Order #{order.id} has been cancelled and buyer refunded.'
     )
     return redirect('notifications')
 
@@ -1262,3 +1374,69 @@ def mark_all_notifications_read(request):
 
     messages.success(request, 'All notifications marked as read.')
     return redirect('notifications')
+
+
+# ──────────────────────────────────────────────────────────────
+# WALLET VIEWS
+# ──────────────────────────────────────────────────────────────
+
+def wallet_page(request):
+    """Wallet page for both buyers and sellers."""
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        messages.error(request, 'Please sign in to view your wallet.')
+        return redirect('signin_page')
+
+    # Get or create wallet
+    user_wallet = _get_or_create_wallet(user)
+
+    transactions = user_wallet.transactions.select_related('order').all()
+
+    # Compute stats
+    total_credits = sum(
+        t.amount for t in transactions if t.transaction_type in ('credit', 'refund', 'add_funds')
+    )
+    total_debits = sum(
+        t.amount for t in transactions if t.transaction_type == 'debit'
+    )
+
+    context = {
+        'user_name': user.name,
+        'user_type': user_type,
+        'wallet': user_wallet,
+        'transactions': transactions,
+        'total_credits': total_credits,
+        'total_debits': total_debits,
+        'txn_count': transactions.count(),
+        'unread_notification_count': _get_unread_notification_count(request),
+    }
+    return render(request, 'wallet.html', context)
+
+
+def add_funds(request):
+    """POST-only: add ₹10,000 to the user's wallet."""
+    if request.method != 'POST':
+        return redirect('wallet')
+
+    user, user_type = _get_valid_session_user(request)
+    if not user:
+        return redirect('signin_page')
+
+    amount = Decimal('10000.00')
+
+    with transaction.atomic():
+        user_wallet = _get_or_create_wallet(user)
+
+        user_wallet.balance += amount
+        user_wallet.save()
+
+        Transaction.objects.create(
+            wallet=user_wallet,
+            transaction_type='add_funds',
+            amount=amount,
+            balance_after=user_wallet.balance,
+            description='Added ₹10,000 to wallet',
+        )
+
+    messages.success(request, '₹10,000 added to your wallet!')
+    return redirect('wallet')

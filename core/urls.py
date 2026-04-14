@@ -42,4 +42,8 @@ path('addresses/<int:address_id>/default/',   views.set_default_address, name='s
     path('order-item/<int:item_id>/approve/',           views.seller_approve_item,         name='seller_approve_item'),
     path('order-item/<int:item_id>/reject/',            views.seller_reject_item,          name='seller_reject_item'),
     path('chatbot/',chatbot,name='chatbot'),
+
+    # Wallet
+    path('wallet/',            views.wallet_page, name='wallet'),
+    path('wallet/add-funds/',  views.add_funds,   name='add_funds'),
 ]

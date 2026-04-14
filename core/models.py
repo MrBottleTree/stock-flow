@@ -6,6 +6,13 @@ class Buyer(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=128, blank=True, default="")
+    wallet = models.OneToOneField(
+        'Wallet',
+        on_delete=models.CASCADE,
+        related_name='buyer_owner',
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name
@@ -43,6 +50,13 @@ class Seller(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
     password = models.CharField(max_length=128, blank=True, default="")
+    wallet = models.OneToOneField(
+        'Wallet',
+        on_delete=models.CASCADE,
+        related_name='seller_owner',
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return self.name
@@ -160,6 +174,9 @@ class Notification(models.Model):
         ('order_rejected', 'Order Rejected'),
         ('item_approved', 'Item Approved'),
         ('item_rejected', 'Item Rejected'),
+        ('wallet_debited', 'Wallet Debited'),
+        ('wallet_credited', 'Wallet Credited'),
+        ('wallet_refunded', 'Wallet Refunded'),
     ]
     buyer = models.ForeignKey(
         Buyer,
@@ -204,3 +221,50 @@ class Notification(models.Model):
     def __str__(self):
         target = self.buyer or self.seller
         return f"Notification for {target} — {self.notification_type}"
+
+
+class Wallet(models.Model):
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        # Check who owns this wallet via the reverse relation
+        if hasattr(self, 'buyer_owner'):
+            return f"Wallet of {self.buyer_owner.name} — ₹{self.balance}"
+        if hasattr(self, 'seller_owner'):
+            return f"Wallet of {self.seller_owner.name} — ₹{self.balance}"
+        return f"Wallet #{self.id} — ₹{self.balance}"
+
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('debit', 'Debit'),
+        ('credit', 'Credit'),
+        ('refund', 'Refund'),
+        ('escrow_hold', 'Escrow Hold'),
+        ('escrow_release', 'Escrow Release'),
+        ('add_funds', 'Add Funds'),
+    ]
+    wallet = models.ForeignKey(
+        Wallet,
+        on_delete=models.CASCADE,
+        related_name="transactions",
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        related_name="transactions",
+        blank=True,
+        null=True,
+    )
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Txn {self.transaction_type} ₹{self.amount} — {self.wallet}"
