@@ -70,6 +70,37 @@
       margin-bottom: 22px;
     }
 
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      align-items: center;
+    }
+
+    .search-bar input {
+      flex: 1;
+      min-width: 220px;
+      border: 1px solid rgba(245,240,232,0.2);
+      background: rgba(14,26,16,0.45);
+      color: var(--cream);
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      border-color: var(--copper);
+      box-shadow: 0 0 0 1px rgba(200,121,65,0.4);
+    }
+
+    .search-results {
+      color: var(--cream-dim);
+      margin-bottom: 20px;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
     .eyebrow {
       color: var(--copper);
       font-size: 11px;
@@ -518,6 +549,15 @@
   <main class="shell" style="padding-top: 110px;">
 
     {% if item_rows %}
+    <div class="search-bar">
+      <form id="search-form" method="get" action="{% url 'items' %}" style="display:flex; width:100%; gap:10px;">
+        <input id="item-search" name="q" type="search" placeholder="Search product names, categories, SKU..." value="{{ search_query|default:'' }}" />
+        <button type="submit" class="btn primary">Search</button>
+      </form>
+    </div>
+    {% if search_query %}
+      <p class="search-results">Showing results for "{{ search_query }}".</p>
+    {% endif %}
     <!-- FILTER TABS -->
     <div class="filter-bar" id="item-filter-bar">
       <button class="filter-btn active" data-filter="all">All Items</button>
@@ -527,7 +567,7 @@
 
     <section class="catalog">
       {% for item in item_rows %}
-      <article class="card item-card" data-stock="{{ item.stock_status_class }}">
+      <article class="card item-card" data-stock="{{ item.stock_status_class }}" data-name="{{ item.name }}" data-category="{{ item.category_name }}" data-description="{{ item.description }}" data-sku="{{ item.sku }}">
         <div class="card-head">
           <div>
             <h2 class="item-name">{{ item.name }}</h2>
@@ -554,6 +594,10 @@
           <div class="meta-box">
             <p class="meta-label">Seller Email</p>
             <p class="meta-value">{{ item.seller_email }}</p>
+          </div>
+          <div class="meta-box">
+            <p class="meta-label">Category</p>
+            <p class="meta-value">{{ item.category_name }}</p>
           </div>
         </div>
 
@@ -590,28 +634,46 @@
     document.addEventListener('DOMContentLoaded', () => {
       const filterBtns = document.querySelectorAll('.filter-btn');
       const cards = document.querySelectorAll('.item-card');
+      const searchInput = document.getElementById('item-search');
+
+      const applyFilters = () => {
+        const activeFilter = document.querySelector('.filter-btn.active')?.dataset.filter || 'all';
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+        cards.forEach(card => {
+          const stock = card.dataset.stock;
+          const name = card.dataset.name.toLowerCase();
+          const category = card.dataset.category.toLowerCase();
+          const description = card.dataset.description.toLowerCase();
+          const sku = card.dataset.sku.toLowerCase();
+
+          let show = true;
+          if (activeFilter === 'instock') {
+            show = (stock === 'in' || stock === 'low');
+          } else if (activeFilter === 'soldout') {
+            show = (stock === 'out');
+          }
+
+          if (show && query) {
+            show = name.includes(query) || category.includes(query) || description.includes(query) || sku.includes(query);
+          }
+
+          card.style.display = show ? '' : 'none';
+        });
+      };
 
       filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           filterBtns.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-
-          const filter = btn.dataset.filter;
-
-          cards.forEach(card => {
-            const stock = card.dataset.stock; // 'in', 'low', 'out'
-            let show = true;
-
-            if (filter === 'instock') {
-              show = (stock === 'in' || stock === 'low');
-            } else if (filter === 'soldout') {
-              show = (stock === 'out');
-            }
-
-            card.style.display = show ? '' : 'none';
-          });
+          applyFilters();
         });
       });
+
+      if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+        applyFilters();
+      }
     });
   </script>
 </body>
