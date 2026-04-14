@@ -1,6 +1,6 @@
 from django.urls import path
 from core import views
-
+from core.chatbot_view import chatbot
 urlpatterns = [
     path('', views.home, name='home'),
     path('signin/', views.signin,  name='signin'),
@@ -41,6 +41,7 @@ path('addresses/<int:address_id>/default/',   views.set_default_address, name='s
     path('notifications/<int:notification_id>/read/',   views.mark_notification_read,      name='mark_notification_read'),
     path('order-item/<int:item_id>/approve/',           views.seller_approve_item,         name='seller_approve_item'),
     path('order-item/<int:item_id>/reject/',            views.seller_reject_item,          name='seller_reject_item'),
+    path('chatbot/',chatbot,name='chatbot'),
 
     # Wallet
     path('wallet/',            views.wallet_page, name='wallet'),
