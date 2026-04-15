@@ -10,6 +10,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
 from django.core.mail import send_mail
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from core.models import *
 from django.http import HttpResponse, JsonResponse
@@ -198,6 +200,41 @@ def _get_or_create_wallet(user):
 
 def _generate_otp_code():
     return f"{random.randint(100000, 999999)}"
+
+
+def _verify_email_exists(email):
+    """Best-effort check before OTP send.
+
+    This validates syntax and asks SMTP if recipient is accepted via RCPT.
+    Not all providers disclose existence, so non-auth/network errors are treated
+    as inconclusive (and we allow OTP send attempt to continue).
+    """
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False, 'Please enter a valid email address.'
+
+    try:
+        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=12) as server:
+            if settings.EMAIL_USE_TLS:
+                server.starttls()
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            server.mail(settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER)
+            code, _ = server.rcpt(email)
+            server.rset()
+
+        if code in (250, 251):
+            return True, ''
+        if code >= 500:
+            return False, 'This email address appears invalid or unreachable.'
+        return True, ''
+    except smtplib.SMTPAuthenticationError as exc:
+        raise RuntimeError(
+            'SMTP authentication failed. If you are using Gmail, use a Google App Password in EMAIL_HOST_PASSWORD.'
+        ) from exc
+    except Exception:
+        # Inconclusive check (provider/network policy). Let OTP send attempt decide.
+        return True, ''
 
 
 def _send_otp_email(email, otp_code, purpose):
@@ -493,9 +530,14 @@ def signup_page(request):
                 messages.error(request, f'An account with this email already exists. Please sign in.')
             else:
                 try:
+                    email_ok, email_error = _verify_email_exists(email)
+                    if not email_ok:
+                        messages.error(request, email_error)
+                        return redirect('signup_page')
+
                     _create_and_send_otp(email, user_type, 'signup')
-                except Exception:
-                    messages.error(request, 'Unable to send OTP right now. Please check email settings and try again.')
+                except Exception as exc:
+                    messages.error(request, f'Unable to send OTP right now. {exc}')
                 else:
                     request.session['pending_signup'] = {
                         'name': name,
@@ -588,9 +630,14 @@ def forgot_password_page(request):
             return redirect('forgot_password_page')
 
         try:
+            email_ok, email_error = _verify_email_exists(email)
+            if not email_ok:
+                messages.error(request, email_error)
+                return redirect('forgot_password_page')
+
             _create_and_send_otp(email, user_type, 'forgot_password')
-        except Exception:
-            messages.error(request, 'Unable to send OTP right now. Please try again.')
+        except Exception as exc:
+            messages.error(request, f'Unable to send OTP right now. {exc}')
             return redirect('forgot_password_page')
 
         request.session['pending_password_reset'] = {
