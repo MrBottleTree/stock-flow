@@ -324,7 +324,7 @@
       background: var(--glass);
     }
 
-    .empty-icon {
+    .icon-diamond {
       width: 64px;
       height: 64px;
       border: 1px solid var(--border);
@@ -335,15 +335,14 @@
       justify-content: center;
     }
 
-    .empty-icon-inner {
+    .icon-diamond-inner {
       width: 24px;
       height: 24px;
-      background: var(--forest-lt);
       display: flex;
       align-items: center;
       justify-content: center;
       transform: rotate(-45deg);
-      font-size: 14px;
+      color: var(--copper-lt);
     }
 
     .empty-title {
@@ -870,7 +869,10 @@
               {{ order.address.country }}
             </div>
             {% if order.delivered_at %}
-            <span class="delivered-date">✓ Delivered {{ order.delivered_at|date:"d M Y" }}</span>
+            <span class="delivered-date" style="display:inline-flex;align-items:center;gap:4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Delivered {{ order.delivered_at|date:"d M Y" }}
+            </span>
             {% endif %}
           </div>
 
@@ -881,8 +883,10 @@
       {% else %}
       <!-- EMPTY STATE -->
       <div class="empty-state">
-        <div class="empty-icon">
-          <div class="empty-icon-inner">📦</div>
+        <div class="icon-diamond">
+          <div class="icon-diamond-inner">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </div>
         </div>
         <h2 class="empty-title">No orders yet</h2>
         <p class="empty-text">When you place your first order, it will appear here.</p>
