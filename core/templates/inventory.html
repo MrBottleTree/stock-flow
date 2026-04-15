@@ -499,6 +499,21 @@
                 <label for="price">Price (USD) *</label>
                 <input id="price" name="price" type="number" min="0.01" step="0.01" placeholder="0.00" value="{{ product.price|default:'' }}" required />
               </div>
+
+              <div class="form-group">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                  <option value="">Select existing category</option>
+                  {% for category in categories %}
+                    <option value="{{ category.id }}" {% if product.category and product.category.id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group full">
+                <label for="new_category">New Category</label>
+                <input id="new_category" name="new_category" type="text" placeholder="Create new category like Electronics" />
+              </div>
             </div>
 
             <div class="section-divider">

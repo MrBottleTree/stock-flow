@@ -49,4 +49,6 @@ path('addresses/<int:address_id>/default/',   views.set_default_address, name='s
     # Wallet
     path('wallet/',            views.wallet_page, name='wallet'),
     path('wallet/add-funds/',  views.add_funds,   name='add_funds'),
+    path('auth/forgot-password/', views.forgot_password, name='forgot_password'),
+path('auth/reset-password/',  views.reset_password,  name='reset_password'),
 ]

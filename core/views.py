@@ -16,7 +16,7 @@ from django.conf import settings
 from core.models import *
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.db import transaction
 
 def home(request):
@@ -53,6 +53,8 @@ def inventory(request, product_id=None):
         price_raw = request.POST.get('price', '').strip()
         quantity_raw = request.POST.get('quantity', '').strip()
         warehouse_location_id = request.POST.get('warehouse_location', '').strip()
+        category_id = request.POST.get('category', '').strip()
+        new_category_name = request.POST.get('new_category', '').strip()
 
         if not all([name, description, sku, price_raw, quantity_raw, warehouse_location_id]):
             messages.error(request, 'Please fill all required item and inventory fields.')
@@ -79,6 +81,15 @@ def inventory(request, product_id=None):
                         messages.error(request, 'Invalid warehouse location selected.')
                         warehouse_address = None
 
+                    # Resolve category selection or create a new one on the fly.
+                    category_obj = None
+                    if new_category_name:
+                        category_obj, _ = Category.objects.get_or_create(
+                            name=new_category_name.strip().title()
+                        )
+                    elif category_id:
+                        category_obj = Category.objects.filter(id=category_id).first()
+
                     if warehouse_address:
                         if product:
                             # Update existing product
@@ -87,6 +98,7 @@ def inventory(request, product_id=None):
                             product.image_url = image_url or None
                             product.sku = sku
                             product.price = price
+                            product.category = category_obj
                             product.save()
 
                             if existing_inventory:
@@ -99,7 +111,7 @@ def inventory(request, product_id=None):
                                     quantity=quantity,
                                     warehouse_location=warehouse_address,
                                 )
-                            messages.success(request, 'Item and inventory updated successfully.')
+                            messages.success(request, 'Item, category, and inventory updated successfully.')
                         else:
                             # Create new product
                             product = Product.objects.create(
@@ -109,6 +121,7 @@ def inventory(request, product_id=None):
                                 image_url=image_url or None,
                                 sku=sku,
                                 price=price,
+                                category=category_obj,
                             )
 
                             Inventory.objects.create(
@@ -116,16 +129,18 @@ def inventory(request, product_id=None):
                                 quantity=quantity,
                                 warehouse_location=warehouse_address,
                             )
-                            messages.success(request, 'Item and inventory created successfully.')
+                            messages.success(request, 'Item, category, and inventory created successfully.')
 
                         return redirect('inventory')
 
     # Fetch seller's addresses to use as warehouse locations
     seller_addresses = Address.objects.filter(seller=user)
+    categories = Category.objects.all()
     context = {
         'seller_name': user.name,
         'user_type': user_type,
         'warehouse_locations': seller_addresses,
+        'categories': categories,
         'product': product,
         'inventory_data': {
             'quantity': existing_inventory.quantity if existing_inventory else '',
@@ -306,9 +321,17 @@ def _render_items_page(request, filter_sold_out=False):
     if not user:
         return redirect('home')
 
-    products = list(
-        Product.objects.select_related('seller').prefetch_related('inventories').all().order_by('-id')
-    )
+    search_query = request.GET.get('q', '').strip()
+    product_query = Product.objects.select_related('seller', 'category').prefetch_related('inventories').all().order_by('-id')
+    if search_query:
+        product_query = product_query.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(sku__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+
+    products = list(product_query)
 
     item_rows = []
     total_stock_units = 0
@@ -362,6 +385,7 @@ def _render_items_page(request, filter_sold_out=False):
                 'image_url': product.image_url,
                 'sku': product.sku,
                 'price': product.price,
+                'category_name': product.category.name if product.category else 'Uncategorized',
                 'seller_id': product.seller.id,
                 'seller_name': product.seller.name,
                 'seller_email': product.seller.email,
@@ -385,6 +409,7 @@ def _render_items_page(request, filter_sold_out=False):
             'out_of_stock_items': out_of_stock_items,
         },
         'is_sold_out_tab': filter_sold_out,
+        'search_query': search_query,
         'page_title': 'Sold Out Items' if filter_sold_out else 'Marketplace Item List',
         'page_subtitle': f"Welcome {user.name} ({user_type}). Browse all products currently out of stock." if filter_sold_out else f"Welcome {user.name} ({user_type}). Browse item health, seller details, and warehouse coverage in one place.",
         'unread_notification_count': _get_unread_notification_count(request),
@@ -1728,3 +1753,84 @@ def add_funds(request):
 
     messages.success(request, '₹10,000 added to your wallet!')
     return redirect('wallet')
+
+    # ──────────────────────────────────────────────────────────────
+# FORGOT / RESET PASSWORD VIEWS
+# Add these functions to the bottom of core/views.py
+# ──────────────────────────────────────────────────────────────
+
+def forgot_password(request):
+    """
+    Step 1: User enters their email + user type.
+    If found, store the user identity in session and redirect to reset page.
+    """
+    if request.method == 'POST':
+        email     = request.POST.get('email', '').strip().lower()
+        user_type = request.POST.get('user_type', '').strip().lower()
+
+        if not email or user_type not in ('buyer', 'seller'):
+            messages.error(request, 'Please enter your email and select account type.')
+            return render(request, 'forgot_password.html')
+
+        user_model = _get_user_model(user_type)
+        user = user_model.objects.filter(email=email).first()
+
+        if not user:
+            # Don't reveal whether account exists — show same message either way
+            messages.error(request, 'No account found with that email and account type.')
+            return render(request, 'forgot_password.html')
+
+        # Store reset intent in session (not a full login)
+        request.session['reset_user_id']   = user.id
+        request.session['reset_user_type'] = user_type
+        messages.success(request, f'Account found. Please set your new password.')
+        return redirect('reset_password')
+
+    return render(request, 'forgot_password.html')
+
+
+def reset_password(request):
+    """
+    Step 2: User sets a new password.
+    Requires reset_user_id + reset_user_type to be in session (set by forgot_password).
+    """
+    reset_id   = request.session.get('reset_user_id')
+    reset_type = request.session.get('reset_user_type')
+
+    # Guard: must have come through forgot_password first
+    if not reset_id or not reset_type:
+        messages.error(request, 'Please start from the forgot password page.')
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        new_password     = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not new_password or not confirm_password:
+            messages.error(request, 'Both fields are required.')
+        elif len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
+        elif new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+        else:
+            user_model = _get_user_model(reset_type)
+            user = user_model.objects.filter(id=reset_id).first()
+
+            if not user:
+                messages.error(request, 'Account not found. Please try again.')
+                # Clear stale session keys
+                request.session.pop('reset_user_id', None)
+                request.session.pop('reset_user_type', None)
+                return redirect('forgot_password')
+
+            user.password = make_password(new_password)
+            user.save()
+
+            # Clear reset session keys
+            request.session.pop('reset_user_id', None)
+            request.session.pop('reset_user_type', None)
+
+            messages.success(request, 'Password reset successfully! Please sign in.')
+            return redirect('signin_page')
+
+    return render(request, 'reset_password.html')
