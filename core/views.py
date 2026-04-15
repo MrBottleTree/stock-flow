@@ -49,6 +49,7 @@ def inventory(request, product_id=None):
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
         image_url = request.POST.get('image_url', '').strip()
+        image_file = request.FILES.get('image')
         sku = request.POST.get('sku', '').strip()
         price_raw = request.POST.get('price', '').strip()
         quantity_raw = request.POST.get('quantity', '').strip()
@@ -99,6 +100,8 @@ def inventory(request, product_id=None):
                             product.sku = sku
                             product.price = price
                             product.category = category_obj
+                            if image_file:
+                                product.image = image_file
                             product.save()
 
                             if existing_inventory:
@@ -119,6 +122,7 @@ def inventory(request, product_id=None):
                                 name=name,
                                 description=description,
                                 image_url=image_url or None,
+                                image=image_file,
                                 sku=sku,
                                 price=price,
                                 category=category_obj,
@@ -229,6 +233,10 @@ def _verify_email_exists(email):
     except ValidationError:
         return False, 'Please enter a valid email address.'
 
+    # Skip manual SMTP verification in development mode to avoid authentication errors.
+    if settings.DEBUG:
+        return True, ''
+
     try:
         with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=12) as server:
             if settings.EMAIL_USE_TLS:
@@ -284,6 +292,8 @@ def _create_and_send_otp(email, user_type, purpose):
     ).update(is_used=True)
 
     otp_code = _generate_otp_code()
+    if settings.DEBUG:
+        otp_code = '123456'
     EmailOTP.objects.create(
         email=email,
         user_type=user_type,
@@ -382,7 +392,7 @@ def _render_items_page(request, filter_sold_out=False):
                 'id': product.id,
                 'name': product.name,
                 'description': product.description,
-                'image_url': product.image_url,
+                'image_url': product.image.url if product.image else product.image_url,
                 'sku': product.sku,
                 'price': product.price,
                 'category_name': product.category.name if product.category else 'Uncategorized',
