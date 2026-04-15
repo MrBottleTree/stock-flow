@@ -1,10 +1,18 @@
 import json
+import random
+import smtplib
 from decimal import Decimal, InvalidOperation
+from datetime import timedelta
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.conf import settings
 from core.models import *
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -203,6 +211,109 @@ def _get_or_create_wallet(user):
     user.wallet = wallet
     user.save(update_fields=['wallet'])
     return wallet
+
+
+def _generate_otp_code():
+    return f"{random.randint(100000, 999999)}"
+
+
+def _verify_email_exists(email):
+    """Best-effort check before OTP send.
+
+    This validates syntax and asks SMTP if recipient is accepted via RCPT.
+    Not all providers disclose existence, so non-auth/network errors are treated
+    as inconclusive (and we allow OTP send attempt to continue).
+    """
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False, 'Please enter a valid email address.'
+
+    try:
+        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=12) as server:
+            if settings.EMAIL_USE_TLS:
+                server.starttls()
+            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            server.mail(settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER)
+            code, _ = server.rcpt(email)
+            server.rset()
+
+        if code in (250, 251):
+            return True, ''
+        if code >= 500:
+            return False, 'This email address appears invalid or unreachable.'
+        return True, ''
+    except smtplib.SMTPAuthenticationError as exc:
+        raise RuntimeError(
+            'SMTP authentication failed. If you are using Gmail, use a Google App Password in EMAIL_HOST_PASSWORD.'
+        ) from exc
+    except Exception:
+        # Inconclusive check (provider/network policy). Let OTP send attempt decide.
+        return True, ''
+
+
+def _send_otp_email(email, otp_code, purpose):
+    purpose_label = 'account signup' if purpose == 'signup' else 'password reset'
+    subject = f"StockFlow OTP for {purpose_label}"
+    message = (
+        f"Your StockFlow OTP is: {otp_code}\n\n"
+        f"This OTP is valid for 10 minutes.\n"
+        f"If you did not request this, please ignore this email."
+    )
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+    except smtplib.SMTPAuthenticationError as exc:
+        raise RuntimeError(
+            'SMTP authentication failed. If you are using Gmail, use a Google App Password in EMAIL_HOST_PASSWORD.'
+        ) from exc
+
+
+def _create_and_send_otp(email, user_type, purpose):
+    # Invalidate older active OTPs for this email/type/purpose.
+    EmailOTP.objects.filter(
+        email=email,
+        user_type=user_type,
+        purpose=purpose,
+        is_used=False,
+    ).update(is_used=True)
+
+    otp_code = _generate_otp_code()
+    EmailOTP.objects.create(
+        email=email,
+        user_type=user_type,
+        purpose=purpose,
+        otp_hash=make_password(otp_code),
+        expires_at=timezone.now() + timedelta(minutes=10),
+    )
+    _send_otp_email(email, otp_code, purpose)
+
+
+def _verify_latest_otp(email, user_type, purpose, otp_code):
+    record = EmailOTP.objects.filter(
+        email=email,
+        user_type=user_type,
+        purpose=purpose,
+        is_used=False,
+    ).order_by('-created_at').first()
+
+    if not record:
+        return False, 'No OTP request found. Please request a new OTP.'
+
+    if timezone.now() > record.expires_at:
+        return False, 'OTP has expired. Please request a new OTP.'
+
+    if not check_password(otp_code, record.otp_hash):
+        return False, 'Invalid OTP. Please try again.'
+
+    record.is_used = True
+    record.save(update_fields=['is_used'])
+    return True, ''
 
 
 def _render_items_page(request, filter_sold_out=False):
@@ -443,18 +554,195 @@ def signup_page(request):
             if user_model.objects.filter(email=email).exists():
                 messages.error(request, f'An account with this email already exists. Please sign in.')
             else:
-                new_user = user_model.objects.create(
-                    name=name,
-                    email=email,
-                    phone=phone,
-                    password=make_password(password),
-                )
-                # Auto-create wallet for new user
-                _get_or_create_wallet(new_user)
-                messages.success(request, 'Account created! Please sign in.')
-                return redirect('signin_page')
+                try:
+                    email_ok, email_error = _verify_email_exists(email)
+                    if not email_ok:
+                        messages.error(request, email_error)
+                        return redirect('signup_page')
+
+                    _create_and_send_otp(email, user_type, 'signup')
+                except Exception as exc:
+                    messages.error(request, f'Unable to send OTP right now. {exc}')
+                else:
+                    request.session['pending_signup'] = {
+                        'name': name,
+                        'email': email,
+                        'phone': phone,
+                        'password_hash': make_password(password),
+                        'user_type': user_type,
+                    }
+                    messages.success(request, 'OTP sent to your email. Please verify to complete signup.')
+                    return redirect('verify_signup_page')
 
     return render(request, 'auth.html')
+
+
+def verify_signup_page(request):
+    pending = request.session.get('pending_signup')
+    if not pending:
+        messages.error(request, 'No pending signup found. Please sign up again.')
+        return redirect('signup_page')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'verify').strip()
+
+        if action == 'resend':
+            try:
+                _create_and_send_otp(pending['email'], pending['user_type'], 'signup')
+                messages.success(request, 'A new OTP has been sent to your email.')
+            except Exception:
+                messages.error(request, 'Unable to resend OTP right now. Please try again.')
+            return redirect('verify_signup_page')
+
+        otp = request.POST.get('otp', '').strip()
+        if not otp:
+            messages.error(request, 'Please enter the OTP sent to your email.')
+            return redirect('verify_signup_page')
+
+        valid, error_message = _verify_latest_otp(
+            pending['email'],
+            pending['user_type'],
+            'signup',
+            otp,
+        )
+        if not valid:
+            messages.error(request, error_message)
+            return redirect('verify_signup_page')
+
+        user_model = _get_user_model(pending['user_type'])
+        if user_model.objects.filter(email=pending['email']).exists():
+            request.session.pop('pending_signup', None)
+            messages.error(request, 'An account with this email already exists. Please sign in.')
+            return redirect('signin_page')
+
+        new_user = user_model.objects.create(
+            name=pending['name'],
+            email=pending['email'],
+            phone=pending['phone'],
+            password=pending['password_hash'],
+        )
+        _get_or_create_wallet(new_user)
+
+        request.session.pop('pending_signup', None)
+        messages.success(request, 'Email verified! Account created successfully. Please sign in.')
+        return redirect('signin_page')
+
+    return render(
+        request,
+        'verify_otp.html',
+        {
+            'flow_title': 'Verify Your Email',
+            'flow_subtitle': 'Enter the OTP sent to your email to complete signup.',
+            'email': pending.get('email', ''),
+            'post_url_name': 'verify_signup_page',
+        },
+    )
+
+
+def forgot_password_page(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        user_type = request.POST.get('user_type', '').strip().lower()
+
+        if not email or user_type not in ('buyer', 'seller'):
+            messages.error(request, 'Please provide a valid email and account type.')
+            return redirect('forgot_password_page')
+
+        user_model = _get_user_model(user_type)
+        user = user_model.objects.filter(email=email).first() if user_model else None
+        if not user:
+            messages.error(request, 'No account found for that email and account type.')
+            return redirect('forgot_password_page')
+
+        try:
+            email_ok, email_error = _verify_email_exists(email)
+            if not email_ok:
+                messages.error(request, email_error)
+                return redirect('forgot_password_page')
+
+            _create_and_send_otp(email, user_type, 'forgot_password')
+        except Exception as exc:
+            messages.error(request, f'Unable to send OTP right now. {exc}')
+            return redirect('forgot_password_page')
+
+        request.session['pending_password_reset'] = {
+            'email': email,
+            'user_type': user_type,
+        }
+        messages.success(request, 'OTP sent to your email. Enter it below to reset your password.')
+        return redirect('reset_password_page')
+
+    return render(request, 'forgot_password.html')
+
+
+def reset_password_page(request):
+    pending = request.session.get('pending_password_reset')
+    if not pending:
+        messages.error(request, 'No pending password reset found. Please request OTP first.')
+        return redirect('forgot_password_page')
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'reset').strip()
+
+        if action == 'resend':
+            try:
+                _create_and_send_otp(pending['email'], pending['user_type'], 'forgot_password')
+                messages.success(request, 'A new OTP has been sent to your email.')
+            except Exception:
+                messages.error(request, 'Unable to resend OTP right now. Please try again.')
+            return redirect('reset_password_page')
+
+        otp = request.POST.get('otp', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not all([otp, new_password, confirm_password]):
+            messages.error(request, 'OTP, new password, and confirm password are required.')
+            return redirect('reset_password_page')
+
+        if len(new_password) < 8:
+            messages.error(request, 'New password must be at least 8 characters.')
+            return redirect('reset_password_page')
+
+        if new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('reset_password_page')
+
+        valid, error_message = _verify_latest_otp(
+            pending['email'],
+            pending['user_type'],
+            'forgot_password',
+            otp,
+        )
+        if not valid:
+            messages.error(request, error_message)
+            return redirect('reset_password_page')
+
+        user_model = _get_user_model(pending['user_type'])
+        user = user_model.objects.filter(email=pending['email']).first() if user_model else None
+        if not user:
+            request.session.pop('pending_password_reset', None)
+            messages.error(request, 'Account not found.')
+            return redirect('forgot_password_page')
+
+        user.password = make_password(new_password)
+        user.save(update_fields=['password'])
+
+        request.session.pop('pending_password_reset', None)
+        messages.success(request, 'Password reset successful. Please sign in with your new password.')
+        return redirect('signin_page')
+
+    return render(
+        request,
+        'verify_otp.html',
+        {
+            'flow_title': 'Reset Password',
+            'flow_subtitle': 'Enter OTP and choose a new password.',
+            'email': pending.get('email', ''),
+            'post_url_name': 'reset_password_page',
+            'show_password_fields': True,
+        },
+    )
 
 
 def signin_page(request):
