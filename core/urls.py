@@ -10,6 +10,9 @@ urlpatterns = [
     path('auth/signin/', views.signin_page, name='signin_page'),
     path('auth/signup/', views.signup_page, name='signup_page'),
     path('auth/signout/', views.signout_page, name='signout_page'),
+    path('auth/verify-signup/', views.verify_signup_page, name='verify_signup_page'),
+    path('auth/forgot-password/', views.forgot_password_page, name='forgot_password_page'),
+    path('auth/reset-password/', views.reset_password_page, name='reset_password_page'),
 
     # Abhi this is just dummy in the views.py, change it when needed
     path('products/', views.products, name='products'),
