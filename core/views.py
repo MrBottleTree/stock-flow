@@ -1440,3 +1440,84 @@ def add_funds(request):
 
     messages.success(request, '₹10,000 added to your wallet!')
     return redirect('wallet')
+
+    # ──────────────────────────────────────────────────────────────
+# FORGOT / RESET PASSWORD VIEWS
+# Add these functions to the bottom of core/views.py
+# ──────────────────────────────────────────────────────────────
+
+def forgot_password(request):
+    """
+    Step 1: User enters their email + user type.
+    If found, store the user identity in session and redirect to reset page.
+    """
+    if request.method == 'POST':
+        email     = request.POST.get('email', '').strip().lower()
+        user_type = request.POST.get('user_type', '').strip().lower()
+
+        if not email or user_type not in ('buyer', 'seller'):
+            messages.error(request, 'Please enter your email and select account type.')
+            return render(request, 'forgot_password.html')
+
+        user_model = _get_user_model(user_type)
+        user = user_model.objects.filter(email=email).first()
+
+        if not user:
+            # Don't reveal whether account exists — show same message either way
+            messages.error(request, 'No account found with that email and account type.')
+            return render(request, 'forgot_password.html')
+
+        # Store reset intent in session (not a full login)
+        request.session['reset_user_id']   = user.id
+        request.session['reset_user_type'] = user_type
+        messages.success(request, f'Account found. Please set your new password.')
+        return redirect('reset_password')
+
+    return render(request, 'forgot_password.html')
+
+
+def reset_password(request):
+    """
+    Step 2: User sets a new password.
+    Requires reset_user_id + reset_user_type to be in session (set by forgot_password).
+    """
+    reset_id   = request.session.get('reset_user_id')
+    reset_type = request.session.get('reset_user_type')
+
+    # Guard: must have come through forgot_password first
+    if not reset_id or not reset_type:
+        messages.error(request, 'Please start from the forgot password page.')
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        new_password     = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not new_password or not confirm_password:
+            messages.error(request, 'Both fields are required.')
+        elif len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters.')
+        elif new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+        else:
+            user_model = _get_user_model(reset_type)
+            user = user_model.objects.filter(id=reset_id).first()
+
+            if not user:
+                messages.error(request, 'Account not found. Please try again.')
+                # Clear stale session keys
+                request.session.pop('reset_user_id', None)
+                request.session.pop('reset_user_type', None)
+                return redirect('forgot_password')
+
+            user.password = make_password(new_password)
+            user.save()
+
+            # Clear reset session keys
+            request.session.pop('reset_user_id', None)
+            request.session.pop('reset_user_type', None)
+
+            messages.success(request, 'Password reset successfully! Please sign in.')
+            return redirect('signin_page')
+
+    return render(request, 'reset_password.html')
