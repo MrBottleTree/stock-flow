@@ -8,7 +8,7 @@ from django.contrib import messages
 from core.models import *
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.db import transaction
 
 def home(request):
@@ -45,6 +45,8 @@ def inventory(request, product_id=None):
         price_raw = request.POST.get('price', '').strip()
         quantity_raw = request.POST.get('quantity', '').strip()
         warehouse_location_id = request.POST.get('warehouse_location', '').strip()
+        category_id = request.POST.get('category', '').strip()
+        new_category_name = request.POST.get('new_category', '').strip()
 
         if not all([name, description, sku, price_raw, quantity_raw, warehouse_location_id]):
             messages.error(request, 'Please fill all required item and inventory fields.')
@@ -71,6 +73,15 @@ def inventory(request, product_id=None):
                         messages.error(request, 'Invalid warehouse location selected.')
                         warehouse_address = None
 
+                    # Resolve category selection or create a new one on the fly.
+                    category_obj = None
+                    if new_category_name:
+                        category_obj, _ = Category.objects.get_or_create(
+                            name=new_category_name.strip().title()
+                        )
+                    elif category_id:
+                        category_obj = Category.objects.filter(id=category_id).first()
+
                     if warehouse_address:
                         if product:
                             # Update existing product
@@ -79,6 +90,7 @@ def inventory(request, product_id=None):
                             product.image_url = image_url or None
                             product.sku = sku
                             product.price = price
+                            product.category = category_obj
                             product.save()
 
                             if existing_inventory:
@@ -91,7 +103,7 @@ def inventory(request, product_id=None):
                                     quantity=quantity,
                                     warehouse_location=warehouse_address,
                                 )
-                            messages.success(request, 'Item and inventory updated successfully.')
+                            messages.success(request, 'Item, category, and inventory updated successfully.')
                         else:
                             # Create new product
                             product = Product.objects.create(
@@ -101,6 +113,7 @@ def inventory(request, product_id=None):
                                 image_url=image_url or None,
                                 sku=sku,
                                 price=price,
+                                category=category_obj,
                             )
 
                             Inventory.objects.create(
@@ -108,16 +121,18 @@ def inventory(request, product_id=None):
                                 quantity=quantity,
                                 warehouse_location=warehouse_address,
                             )
-                            messages.success(request, 'Item and inventory created successfully.')
+                            messages.success(request, 'Item, category, and inventory created successfully.')
 
                         return redirect('inventory')
 
     # Fetch seller's addresses to use as warehouse locations
     seller_addresses = Address.objects.filter(seller=user)
+    categories = Category.objects.all()
     context = {
         'seller_name': user.name,
         'user_type': user_type,
         'warehouse_locations': seller_addresses,
+        'categories': categories,
         'product': product,
         'inventory_data': {
             'quantity': existing_inventory.quantity if existing_inventory else '',
@@ -195,9 +210,17 @@ def _render_items_page(request, filter_sold_out=False):
     if not user:
         return redirect('home')
 
-    products = list(
-        Product.objects.select_related('seller').prefetch_related('inventories').all().order_by('-id')
-    )
+    search_query = request.GET.get('q', '').strip()
+    product_query = Product.objects.select_related('seller', 'category').prefetch_related('inventories').all().order_by('-id')
+    if search_query:
+        product_query = product_query.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(sku__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
+
+    products = list(product_query)
 
     item_rows = []
     total_stock_units = 0
@@ -251,6 +274,7 @@ def _render_items_page(request, filter_sold_out=False):
                 'image_url': product.image_url,
                 'sku': product.sku,
                 'price': product.price,
+                'category_name': product.category.name if product.category else 'Uncategorized',
                 'seller_id': product.seller.id,
                 'seller_name': product.seller.name,
                 'seller_email': product.seller.email,
@@ -274,6 +298,7 @@ def _render_items_page(request, filter_sold_out=False):
             'out_of_stock_items': out_of_stock_items,
         },
         'is_sold_out_tab': filter_sold_out,
+        'search_query': search_query,
         'page_title': 'Sold Out Items' if filter_sold_out else 'Marketplace Item List',
         'page_subtitle': f"Welcome {user.name} ({user_type}). Browse all products currently out of stock." if filter_sold_out else f"Welcome {user.name} ({user_type}). Browse item health, seller details, and warehouse coverage in one place.",
         'unread_notification_count': _get_unread_notification_count(request),
