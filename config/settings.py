@@ -20,6 +20,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env')) # MAKE SURE THAT YOU GUYS HAVE MADE THIS .env FILE IN THE BASE_DIR
 
 
+def _env_list(name, default=None):
+    raw_value = os.getenv(name, '')
+    if raw_value:
+        return [item.strip() for item in raw_value.split(',') if item.strip()]
+    return list(default or [])
+
+
+def _env_list_with_defaults(name, defaults):
+    configured = _env_list(name)
+    merged = list(defaults)
+    for value in configured:
+        if value not in merged:
+            merged.append(value)
+    return merged
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -29,7 +45,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = _env_list_with_defaults('ALLOWED_HOSTS', ['127.0.0.1', 'localhost', '.trycloudflare.com'])
+CSRF_TRUSTED_ORIGINS = _env_list_with_defaults('CSRF_TRUSTED_ORIGINS', ['https://*.trycloudflare.com'])
+USE_X_FORWARDED_HOST = os.getenv('USE_X_FORWARDED_HOST', 'True') == 'True'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -119,17 +138,21 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Media files (Uploaded images)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Email (OTP delivery)
-if DEBUG:
+# You can force SMTP in development by setting EMAIL_BACKEND_MODE=smtp in .env.
+email_backend_mode = os.getenv('EMAIL_BACKEND_MODE', '').strip().lower()
+if email_backend_mode == 'smtp':
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+elif email_backend_mode == 'console':
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
