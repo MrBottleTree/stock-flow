@@ -395,7 +395,7 @@
       background: var(--glass);
     }
 
-    .empty-icon {
+    .icon-diamond {
       width: 64px;
       height: 64px;
       border: 1px solid var(--border);
@@ -406,15 +406,14 @@
       justify-content: center;
     }
 
-    .empty-icon-inner {
+    .icon-diamond-inner {
       width: 24px;
       height: 24px;
-      background: var(--forest-lt);
       display: flex;
       align-items: center;
       justify-content: center;
       transform: rotate(-45deg);
-      font-size: 14px;
+      color: var(--copper-lt);
     }
 
     .empty-title {
@@ -838,7 +837,10 @@
           {% if unread_count > 0 %}
           <form method="post" action="{% url 'mark_all_notifications_read' %}" id="form-mark-all-read">
             {% csrf_token %}
-            <button type="submit" class="btn-ghost">✓ Mark All Read</button>
+            <button type="submit" class="btn-ghost" style="display:inline-flex;align-items:center;gap:6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Mark All Read
+            </button>
           </form>
           {% endif %}
         </div>
@@ -926,13 +928,17 @@
               <!-- Seller can approve or reject -->
               <form method="post" action="{% url 'seller_approve_item' notif.order_item.id %}" style="display:inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn-approve" id="btn-approve-{{ notif.order_item.id }}">✓ Approve</button>
+                <button type="submit" class="btn-approve" id="btn-approve-{{ notif.order_item.id }}" style="display:inline-flex;align-items:center;gap:6px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Approve
+                </button>
               </form>
               <form method="post" action="{% url 'seller_reject_item' notif.order_item.id %}" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn-reject" id="btn-reject-{{ notif.order_item.id }}"
                   onclick="return confirm('Rejecting this item will cancel the ENTIRE order. Proceed?')">
-                  ✕ Reject
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  Reject
                 </button>
               </form>
               {% elif not notif.is_read %}
@@ -952,9 +958,11 @@
 
       {% else %}
       <!-- EMPTY STATE -->
-      <div class="empty-state" id="notif-empty-state">
-        <div class="empty-icon">
-          <div class="empty-icon-inner">🔔</div>
+      <div class="empty-state">
+        <div class="icon-diamond">
+          <div class="icon-diamond-inner">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </div>
         </div>
         <h2 class="empty-title">No notifications yet</h2>
         <p class="empty-text">
