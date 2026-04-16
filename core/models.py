@@ -110,6 +110,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     image_url = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     sku = models.CharField(max_length=100, unique=True)
     category = models.ForeignKey(
