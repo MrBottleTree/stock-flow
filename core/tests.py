@@ -125,6 +125,52 @@ class AuthApiTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertIsNone(self.client.session.get('user_id'))
 
+	def test_delete_account_removes_buyer_from_database(self):
+		buyer = Buyer.objects.create(
+			name='Delete Buyer',
+			email='delete-buyer@example.com',
+			phone='1234567890',
+			password='secret123',
+		)
+
+		session = self.client.session
+		session['user_id'] = buyer.id
+		session['user_type'] = 'buyer'
+		session['user_name'] = buyer.name
+		session.save()
+
+		self.client.get(reverse('profile'))
+		csrf_token = self.client.cookies['csrftoken'].value
+
+		response = self.client.post(reverse('delete_account'), HTTP_X_CSRFTOKEN=csrf_token)
+
+		self.assertRedirects(response, reverse('signin_page'))
+		self.assertFalse(Buyer.objects.filter(id=buyer.id).exists())
+		self.assertIsNone(self.client.session.get('user_id'))
+
+	def test_delete_account_removes_seller_from_database(self):
+		seller = Seller.objects.create(
+			name='Delete Seller',
+			email='delete-seller@example.com',
+			phone='1234567890',
+			password='secret123',
+		)
+
+		session = self.client.session
+		session['user_id'] = seller.id
+		session['user_type'] = 'seller'
+		session['user_name'] = seller.name
+		session.save()
+
+		self.client.get(reverse('profile'))
+		csrf_token = self.client.cookies['csrftoken'].value
+
+		response = self.client.post(reverse('delete_account'), HTTP_X_CSRFTOKEN=csrf_token)
+
+		self.assertRedirects(response, reverse('signin_page'))
+		self.assertFalse(Seller.objects.filter(id=seller.id).exists())
+		self.assertIsNone(self.client.session.get('user_id'))
+
 	def test_signup_post_without_csrf_token_is_allowed(self):
 		response = self._post_json(
 			'signup',

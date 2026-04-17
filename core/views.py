@@ -292,7 +292,8 @@ def _create_and_send_otp(email, user_type, purpose):
     ).update(is_used=True)
 
     otp_code = _generate_otp_code()
-    if settings.DEBUG:
+    # Keep predictable OTP only for local console-email debugging.
+    if settings.DEBUG and settings.EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
         otp_code = '123456'
     EmailOTP.objects.create(
         email=email,
@@ -1390,15 +1391,15 @@ def change_password(request):
 
 
 def delete_account(request):
-    if 'user_id' not in request.session or request.session.get('user_type') != 'buyer':
+    user, user_type = _get_valid_session_user(request)
+    if not user:
         return redirect('signin_page')
 
     if request.method == 'POST':
-        buyer = Buyer.objects.get(id=request.session['user_id'])
-        buyer.delete()
+        user.delete()
         request.session.flush()
         messages.success(request, 'Your account has been deleted.')
-        return redirect('home')
+        return redirect('signin_page')
     return redirect('profile')
 
 
