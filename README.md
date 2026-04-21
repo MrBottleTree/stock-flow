@@ -198,42 +198,6 @@ Main entities and responsibilities:
 
 ---
 
-## 6) Who built it (from commits, PRs, issues, comments)
-
-### Commit authorship snapshot (latest history fetched)
-Total commits inspected: **83**
-- **Vishrut Ramraj**: 40
-- **Darsh Verma**: 11
-- **svm-12**: 8
-- **Farhan Dhattiwala**: 8
-- **jewel-surabhi**: 6
-- **Ishan**: 5
-- **Tanay**: 4
-- **AuraDauntless**: 1
-
-### PR contributor set (34 PRs inspected)
-Active PR authors include:
-- `DarshEllisd`
-- `svm-12`
-- `jewel-surabhi`
-- `farhan3011`
-- `Tanay8778`
-- `ishanagrawal234`
-- `AuraDauntless`
-- `MrBottleTree`
-
-### Issue participation snapshot
-Issues inspected: **32 closed + 1 open (#66 Hosting)**
-- Major planning/requirement direction came from **MrBottleTree**.
-- Significant execution and follow-up discussions involved:
-  - `DarshEllisd`
-  - `svm-12`
-  - `farhan3011`
-  - `Tanay8778`
-  - `ishanagrawal234`
-  - `jewel-surabhi`
-  - `AuraDauntless`
-
 ### Comment-derived collaboration patterns
 From issue comments:
 - Work was frequently assigned/claimed directly in issue threads.
@@ -241,9 +205,5 @@ From issue comments:
 - UI/UX refinements were often iterated after review comments (navigation consistency, styling, text fixes).
 - Notification-first dependency for wallet behavior was explicitly coordinated in comments.
 
----
 
-## 7) Current backlog signal
-- Open issue **#66** requests public hosting availability.
-- Existing Cloudflare tunnel guide provides a practical interim path.
 
